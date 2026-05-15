@@ -1,0 +1,21 @@
+{
+    "printWidth": 100,
+    "semi": false,
+    "tabWidth": 4,
+    "singleQuote": true,
+    "overrides": [
+        {
+            "files": ["*.yml", "*.yaml"],
+            "options": {
+                "bracketSpacing": false,
+                "tabWidth": 2
+            }
+        },
+        {
+            "files": ["*.json"],
+            "options": {
+                "trailingComma": "all"
+            }
+        }
+    ]
+}

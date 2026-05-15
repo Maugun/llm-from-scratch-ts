@@ -1,0 +1,33 @@
+{
+    "name": "typescript-llm",
+    "version": "0.1.0",
+    "description": "Mini LLM pedagogique en TypeScript pour comprendre progressivement les mecanismes des LLM modernes.",
+    "type": "module",
+    "private": true,
+    "packageManager": "npm@11.9.0",
+    "engines": {
+        "node": ">=24 <25",
+        "npm": ">=11"
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "test": "vitest run --passWithNoTests",
+        "test:watch": "vitest",
+        "typecheck": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.39.4",
+        "@types/node": "^24.10.1",
+        "eslint": "^9.39.4",
+        "eslint-config-prettier": "^10.1.8",
+        "globals": "^17.4.0",
+        "prettier": "^3.8.1",
+        "typescript": "^6.0.2",
+        "typescript-eslint": "^8.58.0",
+        "vitest": "^4.0.15"
+    }
+}
