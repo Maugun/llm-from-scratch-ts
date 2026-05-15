@@ -7,12 +7,14 @@ export const moduleRoadmap = [
     '04-embeddings',
     '05-self-attention',
     '06-transformer-block',
-    '07-training-loop',
-    '08-text-generation',
-    '09-sampling-strategies',
-    '10-vram-optimizations',
-    '11-simple-tool-calling',
-    '12-mcp-connectors-optional',
+    '07-positional-encoding',
+    '08-training-loop-cpu',
+    '09-minimal-trainable-language-model',
+    '10-text-generation',
+    '11-sampling-strategies',
+    '12-tensorflowjs-autograd',
+    '13-memory-performance-vram',
+    '14-mini-end-to-end-pipeline',
 ] as const
 
 export { createCharacterTokenizer } from './modules/01-tokenizer-simple/index.js'
@@ -60,3 +62,13 @@ export type {
     TransformerBlockApplication,
     TransformerBlockOptions,
 } from './modules/06-transformer-block/index.js'
+
+export {
+    addPositionalEmbeddings,
+    createPositionEmbeddingTable,
+    getPositionEmbedding,
+} from './modules/07-positional-encoding/index.js'
+export type {
+    PositionEmbeddingTable,
+    PositionEmbeddingTableOptions,
+} from './modules/07-positional-encoding/index.js'

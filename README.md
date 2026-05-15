@@ -23,12 +23,14 @@ Ce projet ne vise pas la performance ni un usage production.
 4. Embeddings
 5. Self-attention
 6. Transformer block
-7. Training loop
-8. Text generation
-9. Sampling strategies
-10. Optimisations VRAM
-11. Tool calling simple
-12. MCP connectors, optionnel
+7. Positional encoding
+8. Training loop CPU pédagogique
+9. Modèle de langage minimal entraînable
+10. Text generation
+11. Sampling strategies
+12. TensorFlow.js / autograd
+13. Mémoire, performance et VRAM
+14. Mini pipeline end-to-end
 
 ## Prérequis
 
@@ -57,6 +59,7 @@ npm run demo:03-bigram
 npm run demo:04-embeddings
 npm run demo:05-attention
 npm run demo:06-transformer-block
+npm run demo:07-positional-encoding
 ```
 
 `npm test` accepte temporairement l'absence de tests. Les tests réels seront ajoutés avec
@@ -77,6 +80,7 @@ src/
     04-embeddings/
     05-self-attention/
     06-transformer-block/
+    07-positional-encoding/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
@@ -84,6 +88,7 @@ test/
   04-embeddings/
   05-self-attention/
   06-transformer-block/
+  07-positional-encoding/
 data/
   tiny-corpus.txt
 ```
