@@ -14,3 +14,6 @@ export const moduleRoadmap = [
     'simple-tool-calling',
     'mcp-connectors-optional',
 ] as const
+
+export { createCharacterTokenizer } from './modules/tokenizer-simple/index.js'
+export type { CharacterTokenizer } from './modules/tokenizer-simple/index.js'
