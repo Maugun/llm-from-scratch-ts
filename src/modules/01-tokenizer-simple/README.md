@@ -35,6 +35,12 @@ Dans cet exemple, le texte `hello` devient une sequence d'entiers, puis cette se
 reconvertie en texte. Le modele ne verrait que les entiers; nous gardons le decodage pour
 pouvoir revenir a une forme lisible.
 
+Pour lancer une demo executable:
+
+```bash
+npm run demo:01-tokenizer
+```
+
 ## Impact memoire / VRAM
 
 Ce module utilise uniquement des tableaux et des `Map` en RAM CPU. Il ne cree aucun tenseur,

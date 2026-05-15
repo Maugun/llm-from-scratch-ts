@@ -27,6 +27,9 @@ Thumbs.db
 .idea/
 .vscode/
 
+# Local agent instructions
+AGENTS.md
+
 # Test and tooling artifacts
 .eslintcache
 *.tsbuildinfo

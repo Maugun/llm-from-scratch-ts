@@ -48,6 +48,12 @@ console.info(dataset.trainTokenIds)
 console.info(dataset.validationTokenIds)
 ```
 
+Pour lancer une demo executable:
+
+```bash
+npm run demo:02-dataset
+```
+
 ## Mini corpus
 
 Le fichier `data/tiny-corpus.txt` est volontairement court et repetitif. Il n'est pas fait

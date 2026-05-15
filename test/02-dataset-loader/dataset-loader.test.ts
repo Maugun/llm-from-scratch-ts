@@ -8,8 +8,8 @@ import {
     createTokenDataset,
     loadTextFile,
     loadTokenDatasetFromFile,
-} from '../../src/modules/dataset-loader/index.js'
-import { createCharacterTokenizer } from '../../src/modules/tokenizer-simple/index.js'
+} from '../../src/modules/02-dataset-loader/index.js'
+import { createCharacterTokenizer } from '../../src/modules/01-tokenizer-simple/index.js'
 
 let temporaryDirectory: string
 

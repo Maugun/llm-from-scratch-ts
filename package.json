@@ -11,6 +11,8 @@
     },
     "scripts": {
         "build": "tsc -p tsconfig.build.json",
+        "demo:01-tokenizer": "tsx src/modules/01-tokenizer-simple/demo.ts",
+        "demo:02-dataset": "tsx src/modules/02-dataset-loader/demo.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "lint": "eslint .",
@@ -26,6 +28,7 @@
         "eslint-config-prettier": "^10.1.8",
         "globals": "^17.4.0",
         "prettier": "^3.8.1",
+        "tsx": "^4.21.0",
         "typescript": "^6.0.2",
         "typescript-eslint": "^8.58.0",
         "vitest": "^4.0.15"

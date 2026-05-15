@@ -1,5 +1,5 @@
 bonjour llm.
-bonjour monde.
+bonjour tout le monde.
 le chat dort.
 le chat mange.
 le modele apprend.

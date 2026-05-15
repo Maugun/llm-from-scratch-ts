@@ -51,10 +51,15 @@ npm run build
 npm run lint
 npm run format:check
 npm test
+npm run demo:01-tokenizer
+npm run demo:02-dataset
 ```
 
 `npm test` accepte temporairement l'absence de tests. Les tests reels seront ajoutes avec
 les modules, quand ils apportent une verification utile.
+
+Les scripts `demo:*` lancent de petits exemples executables pour manipuler chaque module
+comme dans un cours pratique.
 
 ## Structure
 
@@ -62,11 +67,17 @@ les modules, quand ils apportent une verification utile.
 src/
   index.ts
   modules/
+    01-tokenizer-simple/
+    02-dataset-loader/
 test/
+  01-tokenizer-simple/
+  02-dataset-loader/
+data/
+  tiny-corpus.txt
 ```
 
-`src/modules/` recevra les modules pedagogiques un par un. Aucun module LLM n'est
-implemente dans le socle initial.
+Les modules sont prefixes par numero pour rendre l'ordre pedagogique visible dans
+l'explorateur de fichiers.
 
 ## Workflow pour chaque module
 
