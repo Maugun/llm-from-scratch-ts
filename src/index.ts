@@ -46,3 +46,17 @@ export type {
     SelfAttention,
     SelfAttentionOptions,
 } from './modules/05-self-attention/index.js'
+
+export {
+    addVectors,
+    applyFeedForward,
+    createTransformerBlock,
+    layerNormalize,
+} from './modules/06-transformer-block/index.js'
+export type {
+    FeedForwardWeights,
+    LayerNormalizeOptions,
+    TransformerBlock,
+    TransformerBlockApplication,
+    TransformerBlockOptions,
+} from './modules/06-transformer-block/index.js'

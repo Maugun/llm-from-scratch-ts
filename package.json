@@ -16,6 +16,7 @@
         "demo:03-bigram": "tsx src/modules/03-bigram-model/demo.ts",
         "demo:04-embeddings": "tsx src/modules/04-embeddings/demo.ts",
         "demo:05-attention": "tsx src/modules/05-self-attention/demo.ts",
+        "demo:06-transformer-block": "tsx src/modules/06-transformer-block/demo.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "lint": "eslint .",
