@@ -7,7 +7,7 @@ import { createTokenDataset, loadTextFile } from '../../src/modules/02-dataset-l
 import { createBigramModel } from '../../src/modules/03-bigram-model/index.js'
 
 describe('createBigramModel', () => {
-    it('compte les transitions sur une sequence simple', () => {
+    it('compte les transitions sur une séquence simple', () => {
         const model = createBigramModel([0, 1, 0, 1, 2], 3)
 
         expect(model.getTransitionCount(0, 1)).toBe(2)
@@ -22,7 +22,7 @@ describe('createBigramModel', () => {
         expect(model.totalTransitions).toBe(3)
     })
 
-    it('normalise les probabilites pour un token donne', () => {
+    it('normalise les probabilités pour un token donné', () => {
         const model = createBigramModel([0, 1, 0, 2, 0, 2], 3)
 
         expect(model.getNextTokenProbabilities(0)).toEqual([0, 1 / 3, 2 / 3])
@@ -35,13 +35,13 @@ describe('createBigramModel', () => {
         expect(model.predictMostLikelyNextToken(2)).toBeUndefined()
     })
 
-    it('predit le token suivant le plus probable', () => {
+    it('prédit le token suivant le plus probable', () => {
         const model = createBigramModel([0, 1, 0, 2, 0, 2], 3)
 
         expect(model.predictMostLikelyNextToken(0)).toBe(2)
     })
 
-    it("departage les egalites avec le premier token dans l'ordre des ids", () => {
+    it("départage les égalités avec le premier token dans l'ordre des ids", () => {
         const model = createBigramModel([0, 2, 0, 1], 3)
 
         expect(model.getNextTokenProbabilities(0)).toEqual([0, 0.5, 0.5])
@@ -50,19 +50,19 @@ describe('createBigramModel', () => {
 
     it('rejette un vocabularySize invalide', () => {
         expect(() => createBigramModel([0, 1], 0)).toThrow(
-            'vocabularySize doit etre un entier strictement positif.',
+            'vocabularySize doit être un entier strictement positif.',
         )
     })
 
     it('rejette un token id hors vocabulaire', () => {
         expect(() => createBigramModel([0, 3], 3)).toThrow(
-            'tokenId doit etre un entier entre 0 et 2. Valeur recue: 3.',
+            'tokenId doit être un entier entre 0 et 2. Valeur reçue: 3.',
         )
 
         const model = createBigramModel([0, 1], 2)
 
         expect(() => model.getTransitionCount(0, 2)).toThrow(
-            'tokenId doit etre un entier entre 0 et 1. Valeur recue: 2.',
+            'tokenId doit être un entier entre 0 et 1. Valeur reçue: 2.',
         )
     })
 
@@ -84,7 +84,7 @@ function readFirstTokenId(tokenIds: readonly number[]): number {
     const tokenId = tokenIds[0]
 
     if (tokenId === undefined) {
-        throw new Error('Le tokenizer aurait du produire un token.')
+        throw new Error('Le tokenizer aurait dû produire un token.')
     }
 
     return tokenId

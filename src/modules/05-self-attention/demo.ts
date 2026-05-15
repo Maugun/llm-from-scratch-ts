@@ -25,21 +25,21 @@ console.info('Module 5 - Self-attention causale CPU')
 console.info('')
 console.info('Pipeline:')
 console.info('1. Lire le fichier texte')
-console.info('2. Creer le tokenizer')
-console.info('3. Creer le dataset de tokens')
+console.info('2. Créer le tokenizer')
+console.info('3. Créer le dataset de tokens')
 console.info('4. Transformer des token ids en embeddings')
 console.info('5. Appliquer la self-attention causale')
 console.info('')
 console.info(`Fichier lu: ${corpusPath}`)
-console.info(`Vocabulaire: ${String(tokenizer.vocabularySize)} caracteres`)
+console.info(`Vocabulaire: ${String(tokenizer.vocabularySize)} caractères`)
 console.info(`Tokens dans le dataset: ${String(dataset.totalTokens)}`)
 console.info(`Dimension des embeddings: ${String(embeddingTable.embeddingDimension)}`)
 console.info(`Dimension interne de l'attention: ${String(attention.attentionDimension)}`)
 console.info('')
-console.info('Pourquoi causal ? Une position peut regarder le passe et elle-meme, jamais le futur.')
-console.info('Les poids affiches plus bas indiquent combien chaque position regarde les autres.')
+console.info('Pourquoi causal ? Une position peut regarder le passé et elle-même, jamais le futur.')
+console.info('Les poids affichés plus bas indiquent combien chaque position regarde les autres.')
 console.info(
-    'Les vecteurs de sortie sont donc contextualises: ils melangent les values autorisees.',
+    'Les vecteurs de sortie sont donc contextualisés: ils mélangent les values autorisées.',
 )
 console.info('')
 
@@ -50,7 +50,7 @@ if (process.stdin.isTTY) {
 } else {
     console.info('')
     console.info(
-        "Mode non interactif detecte: lance cette demo dans un terminal pour essayer d'autres textes.",
+        "Mode non interactif détecté: lance cette démo dans un terminal pour essayer d'autres textes.",
     )
 }
 
@@ -72,7 +72,7 @@ function showAttentionForText(text: string): void {
     console.info('Token ids:')
     console.info(tokenIds)
     console.info('')
-    console.info('Embeddings de depart, avant attention:')
+    console.info('Embeddings de départ, avant attention:')
 
     for (const [index, vector] of inputVectors.entries()) {
         const tokenId = readTokenIdAt(tokenIds, index)
@@ -84,8 +84,8 @@ function showAttentionForText(text: string): void {
     console.info('')
     console.info('Projections Q/K/V:')
     console.info('Q = ce que la position cherche')
-    console.info('K = ce que la position annonce pour etre retrouvee')
-    console.info("V = l'information qui sera vraiment melangee dans la sortie")
+    console.info('K = ce que la position annonce pour être retrouvée')
+    console.info("V = l'information qui sera vraiment mélangée dans la sortie")
 
     for (const [index, query] of queries.entries()) {
         const tokenId = readTokenIdAt(tokenIds, index)
@@ -100,7 +100,7 @@ function showAttentionForText(text: string): void {
     }
 
     console.info('')
-    console.info('Poids d attention par position:')
+    console.info('Poids d’attention par position:')
     console.info('Chaque ligne se lit: cette position construit sa sortie en regardant ces tokens.')
 
     for (const [position, weights] of result.attentionWeights.entries()) {
@@ -119,9 +119,9 @@ function showAttentionForText(text: string): void {
     }
 
     console.info('')
-    console.info('Vecteurs contextualises produits:')
+    console.info('Vecteurs contextualisés produits:')
     console.info(
-        'Ils ont la meme longueur que les values, mais ils contiennent maintenant du contexte.',
+        'Ils ont la même longueur que les values, mais ils contiennent maintenant du contexte.',
     )
 
     for (const [position, vector] of result.outputVectors.entries()) {
@@ -132,13 +132,13 @@ function showAttentionForText(text: string): void {
     }
 
     console.info('')
-    console.info('Chaque sortie est une somme ponderee des values autorisees par le masque causal.')
+    console.info('Chaque sortie est une somme pondérée des values autorisées par le masque causal.')
 }
 
 async function startInteractivePrompt(): Promise<void> {
     console.info('')
-    console.info('Saisis un petit texte avec les caracteres du corpus.')
-    console.info('Appuie sur ENTREE pour appliquer l attention, ou sur ESC pour quitter.')
+    console.info('Saisis un petit texte avec les caractères du corpus.')
+    console.info("Appuie sur ENTRÉE pour appliquer l'attention, ou sur ESC pour quitter.")
     console.info('')
 
     let currentInput = ''
@@ -154,7 +154,7 @@ async function startInteractivePrompt(): Promise<void> {
                 process.stdin.setRawMode(false)
                 process.stdin.pause()
                 console.info('')
-                console.info('Demo terminee.')
+                console.info('Démo terminée.')
                 resolve()
 
                 return
@@ -170,7 +170,7 @@ async function startInteractivePrompt(): Promise<void> {
                         showAttentionForText(currentInput)
                     } catch {
                         console.info(
-                            `Le texte "${currentInput}" contient au moins un caractere absent du vocabulaire.`,
+                            `Le texte "${currentInput}" contient au moins un caractère absent du vocabulaire.`,
                         )
                     }
                 }
@@ -213,7 +213,7 @@ function readNumberAt(values: readonly number[], index: number): number {
     const value = values[index]
 
     if (value === undefined) {
-        throw new Error(`Valeur introuvable a l'index ${String(index)}.`)
+        throw new Error(`Valeur introuvable à l'index ${String(index)}.`)
     }
 
     return value
@@ -223,7 +223,7 @@ function readTokenIdAt(tokenIds: readonly number[], index: number): number {
     const tokenId = tokenIds[index]
 
     if (tokenId === undefined) {
-        throw new Error(`Token introuvable a l'index ${String(index)}.`)
+        throw new Error(`Token introuvable à l'index ${String(index)}.`)
     }
 
     return tokenId
@@ -233,7 +233,7 @@ function readVectorAt(vectors: readonly (readonly number[])[], index: number): r
     const vector = vectors[index]
 
     if (vector === undefined) {
-        throw new Error(`Vecteur introuvable a l'index ${String(index)}.`)
+        throw new Error(`Vecteur introuvable à l'index ${String(index)}.`)
     }
 
     return vector

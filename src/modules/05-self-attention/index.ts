@@ -1,20 +1,20 @@
 export type SelfAttentionOptions = {
     /**
-     * Dimension des vecteurs recus en entree.
+     * Dimension des vecteurs reçus en entrée.
      *
-     * Elle doit correspondre a l'embeddingDimension du module 4.
+     * Elle doit correspondre à l'embeddingDimension du module 4.
      */
     readonly embeddingDimension: number
 
     /**
      * Dimension interne des queries, keys et values.
      *
-     * Par defaut, on garde la meme dimension que les embeddings pour limiter les surprises.
+     * Par défaut, on garde la même dimension que les embeddings pour limiter les surprises.
      */
     readonly attentionDimension?: number
 
     /**
-     * Graine optionnelle pour creer les memes matrices Q/K/V a chaque execution.
+     * Graine optionnelle pour créer les mêmes matrices Q/K/V à chaque exécution.
      */
     readonly seed?: number
 }
@@ -30,12 +30,12 @@ export type AttentionApplication = {
     /**
      * Scores avant softmax.
      *
-     * Les positions futures sont marquees par -Infinity pour representer le masque causal.
+     * Les positions futures sont marquées par -Infinity pour représenter le masque causal.
      */
     readonly attentionScores: readonly (readonly number[])[]
 
     /**
-     * Vecteurs contextualises produits par l'attention.
+     * Vecteurs contextualisés produits par l'attention.
      */
     readonly outputVectors: readonly (readonly number[])[]
 }
@@ -61,9 +61,9 @@ export function createSelfAttention(options: SelfAttentionOptions): SelfAttentio
     validatePositiveInteger(attentionDimension, 'attentionDimension')
 
     // Dans un vrai Transformer, ces matrices commencent souvent avec de petites valeurs
-    // aleatoires, puis l'entrainement les ajuste par gradient. Ici nous n'avons pas encore
-    // de training loop: elles restent donc aleatoires mais deterministes, seulement pour
-    // rendre le mecanisme Q/K/V observable et reproductible.
+    // aléatoires, puis l'entraînement les ajuste par gradient. Ici nous n'avons pas encore
+    // de training loop: elles restent donc aléatoires mais déterministes, seulement pour
+    // rendre le mécanisme Q/K/V observable et reproductible.
     const random = createDeterministicRandom(options.seed ?? defaultSeed)
     const queryWeights = createProjectionMatrix(
         options.embeddingDimension,
@@ -102,7 +102,7 @@ export function createSelfAttention(options: SelfAttentionOptions): SelfAttentio
  * Produit scalaire entre deux vecteurs.
  *
  * Dans l'attention, on compare une query avec une key via un produit scalaire:
- * plus le resultat est grand, plus la query "correspond" a cette key.
+ * plus le résultat est grand, plus la query "correspond" à cette key.
  */
 export function dotProduct(vectorA: readonly number[], vectorB: readonly number[]): number {
     validateSameVectorDimension(vectorA, vectorB)
@@ -124,10 +124,10 @@ export function multiplyMatrixVector(
 }
 
 /**
- * Transforme des scores arbitraires en probabilites positives qui somment a 1.
+ * Transforme des scores arbitraires en probabilités positives qui somment à 1.
  *
- * Le softmax est central dans l'attention: apres avoir calcule les scores de compatibilite,
- * il les transforme en poids de melange. Les scores plus grands recoivent plus de poids.
+ * Le softmax est central dans l'attention: après avoir calculé les scores de compatibilité,
+ * il les transforme en poids de mélange. Les scores plus grands reçoivent plus de poids.
  */
 export function softmax(values: readonly number[]): number[] {
     if (values.length === 0) {
@@ -140,8 +140,8 @@ export function softmax(values: readonly number[]): number[] {
         throw new Error('softmax attend au moins une valeur finie.')
     }
 
-    // Soustraire le maximum ne change pas le resultat mathematique du softmax, mais evite
-    // des exponentielles enormes. C'est une astuce numerique tres courante.
+    // Soustraire le maximum ne change pas le résultat mathématique du softmax, mais évite
+    // des exponentielles énormes. C'est une astuce numérique très courante.
     const maxValue = Math.max(...finiteValues)
     const exponentials = values.map((value) =>
         Number.isFinite(value) ? Math.exp(value - maxValue) : 0,
@@ -165,10 +165,10 @@ function applyCausalSelfAttention(
 ): AttentionApplication {
     validateInputVectors(inputVectors, options.embeddingDimension)
 
-    // Chaque embedding est projete en trois roles:
+    // Chaque embedding est projeté en trois rôles:
     // - Query: ce que cette position cherche.
     // - Key: ce que cette position annonce aux autres.
-    // - Value: l'information qui sera effectivement melangee dans la sortie.
+    // - Value: l'information qui sera effectivement mélangée dans la sortie.
     const queries = inputVectors.map((vector) => multiplyMatrixVector(options.queryWeights, vector))
     const keys = inputVectors.map((vector) => multiplyMatrixVector(options.keyWeights, vector))
     const values = inputVectors.map((vector) => multiplyMatrixVector(options.valueWeights, vector))
@@ -178,16 +178,16 @@ function applyCausalSelfAttention(
     const scalingFactor = Math.sqrt(options.attentionDimension)
 
     for (let queryIndex = 0; queryIndex < queries.length; queryIndex++) {
-        // queryIndex represente la position pour laquelle on construit une nouvelle
-        // representation contextualisee. On ne calcule pas "une attention globale":
-        // on produit une sortie separee pour chaque position de la sequence.
+        // queryIndex représente la position pour laquelle on construit une nouvelle
+        // représentation contextualisée. On ne calcule pas "une attention globale":
+        // on produit une sortie séparée pour chaque position de la séquence.
         const query = readVectorAt(queries, queryIndex)
         const scoresForPosition: number[] = []
 
         for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
             if (keyIndex > queryIndex) {
                 // Masque causal: une position n'a pas le droit de regarder le futur.
-                // On met -Infinity pour que softmax donne ensuite un poids 0 a ces positions.
+                // On met -Infinity pour que softmax donne ensuite un poids 0 à ces positions.
                 scoresForPosition.push(Number.NEGATIVE_INFINITY)
             } else {
                 const key = readVectorAt(keys, keyIndex)
@@ -196,15 +196,15 @@ function applyCausalSelfAttention(
                 // avec ce que la position candidate annonce (key).
                 //
                 // La division par sqrt(attentionDimension) garde les scores dans une plage
-                // plus stable quand la dimension augmente, ce qui evite un softmax trop brutal.
+                // plus stable quand la dimension augmente, ce qui évite un softmax trop brutal.
                 const score = dotProduct(query, key) / scalingFactor
 
                 scoresForPosition.push(score)
             }
         }
 
-        // Le softmax transforme les scores en poids positifs qui somment a 1.
-        // Ces poids disent "combien regarder" chaque position autorisee.
+        // Le softmax transforme les scores en poids positifs qui somment à 1.
+        // Ces poids disent "combien regarder" chaque position autorisée.
         const weightsForPosition = softmax(scoresForPosition)
         const outputVector = createZeroVector(options.attentionDimension)
 
@@ -212,9 +212,9 @@ function applyCausalSelfAttention(
             const weight = readNumberAt(weightsForPosition, valueIndex)
             const value = readVectorAt(values, valueIndex)
 
-            // Somme ponderee des values:
+            // Somme pondérée des values:
             // output_i = somme_j attentionWeight(i, j) * value_j.
-            // C'est ici que l'information des positions autorisees est melangee.
+            // C'est ici que l'information des positions autorisées est mélangée.
             for (let dimensionIndex = 0; dimensionIndex < outputVector.length; dimensionIndex++) {
                 const currentOutputValue = readNumberAt(outputVector, dimensionIndex)
 
@@ -261,7 +261,7 @@ function createZeroVector(size: number): number[] {
 
 function normalizeSeed(seed: number): number {
     if (!Number.isFinite(seed)) {
-        throw new Error(`seed doit etre un nombre fini. Valeur recue: ${String(seed)}.`)
+        throw new Error(`seed doit être un nombre fini. Valeur reçue: ${String(seed)}.`)
     }
 
     return seed >>> 0
@@ -271,7 +271,7 @@ function readNumberAt(values: readonly number[], index: number): number {
     const value = values[index]
 
     if (value === undefined) {
-        throw new Error(`Valeur introuvable a l'index ${String(index)}.`)
+        throw new Error(`Valeur introuvable à l'index ${String(index)}.`)
     }
 
     return value
@@ -281,7 +281,7 @@ function readVectorAt(vectors: readonly (readonly number[])[], index: number): r
     const vector = vectors[index]
 
     if (vector === undefined) {
-        throw new Error(`Vecteur introuvable a l'index ${String(index)}.`)
+        throw new Error(`Vecteur introuvable à l'index ${String(index)}.`)
     }
 
     return vector
@@ -298,9 +298,9 @@ function validateInputVectors(
     for (const [index, vector] of inputVectors.entries()) {
         if (vector.length !== embeddingDimension) {
             throw new Error(
-                `Le vecteur d'entree ${String(index)} doit avoir ${String(
+                `Le vecteur d'entrée ${String(index)} doit avoir ${String(
                     embeddingDimension,
-                )} dimensions. Dimension recue: ${String(vector.length)}.`,
+                )} dimensions. Dimension reçue: ${String(vector.length)}.`,
             )
         }
     }
@@ -309,7 +309,7 @@ function validateInputVectors(
 function validatePositiveInteger(value: number, name: string): void {
     if (!Number.isInteger(value) || value <= 0) {
         throw new Error(
-            `${name} doit etre un entier strictement positif. Valeur recue: ${String(value)}.`,
+            `${name} doit être un entier strictement positif. Valeur reçue: ${String(value)}.`,
         )
     }
 }
@@ -317,7 +317,7 @@ function validatePositiveInteger(value: number, name: string): void {
 function validateSameVectorDimension(vectorA: readonly number[], vectorB: readonly number[]): void {
     if (vectorA.length !== vectorB.length) {
         throw new Error(
-            `Les deux vecteurs doivent avoir la meme dimension. Dimensions recues: ${String(
+            `Les deux vecteurs doivent avoir la même dimension. Dimensions reçues: ${String(
                 vectorA.length,
             )} et ${String(vectorB.length)}.`,
         )

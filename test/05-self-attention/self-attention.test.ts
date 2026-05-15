@@ -8,13 +8,13 @@ import {
 } from '../../src/modules/05-self-attention/index.js'
 
 describe('softmax', () => {
-    it('produit des probabilites qui somment a 1', () => {
+    it('produit des probabilités qui somment à 1', () => {
         const probabilities = softmax([1, 2, 3])
 
         expect(probabilities.reduce((sum, value) => sum + value, 0)).toBeCloseTo(1)
     })
 
-    it('favorise les scores plus eleves', () => {
+    it('favorise les scores plus élevés', () => {
         const probabilities = softmax([1, 2, 3])
 
         expect(readNumberAt(probabilities, 2)).toBeGreaterThan(readNumberAt(probabilities, 1))
@@ -26,7 +26,7 @@ function readNumberAt(values: readonly number[], index: number): number {
     const value = values[index]
 
     if (value === undefined) {
-        throw new Error(`Valeur introuvable a l'index ${String(index)}.`)
+        throw new Error(`Valeur introuvable à l'index ${String(index)}.`)
     }
 
     return value
@@ -53,7 +53,7 @@ describe('multiplyMatrixVector', () => {
 })
 
 describe('createSelfAttention', () => {
-    it('cree les matrices aux bonnes dimensions', () => {
+    it('crée les matrices aux bonnes dimensions', () => {
         const attention = createSelfAttention({
             attentionDimension: 2,
             embeddingDimension: 3,
@@ -65,7 +65,7 @@ describe('createSelfAttention', () => {
         expect(attention.valueWeights).toHaveLength(2)
     })
 
-    it('initialise deterministiquement avec le meme seed', () => {
+    it("s'initialise déterministiquement avec le même seed", () => {
         const attentionA = createSelfAttention({
             attentionDimension: 2,
             embeddingDimension: 3,
@@ -82,7 +82,7 @@ describe('createSelfAttention', () => {
         expect(attentionA.valueWeights).toEqual(attentionB.valueWeights)
     })
 
-    it('produit des projections differentes avec des seeds differents', () => {
+    it('produit des projections différentes avec des seeds différents', () => {
         const attentionA = createSelfAttention({
             attentionDimension: 2,
             embeddingDimension: 3,
@@ -128,7 +128,7 @@ describe('createSelfAttention', () => {
         expect(result.outputVectors[1]).toHaveLength(3)
     })
 
-    it('empeche la premiere position de regarder le futur', () => {
+    it('empêche la première position de regarder le futur', () => {
         const attention = createSelfAttention({
             attentionDimension: 2,
             embeddingDimension: 2,
@@ -150,14 +150,14 @@ describe('createSelfAttention', () => {
 
     it('rejette les dimensions invalides', () => {
         expect(() => createSelfAttention({ embeddingDimension: 0 })).toThrow(
-            'embeddingDimension doit etre un entier strictement positif.',
+            'embeddingDimension doit être un entier strictement positif.',
         )
         expect(() => createSelfAttention({ attentionDimension: 0, embeddingDimension: 2 })).toThrow(
-            'attentionDimension doit etre un entier strictement positif.',
+            'attentionDimension doit être un entier strictement positif.',
         )
     })
 
-    it("rejette les vecteurs d'entree incompatibles", () => {
+    it("rejette les vecteurs d'entrée incompatibles", () => {
         const attention = createSelfAttention({
             embeddingDimension: 2,
         })
@@ -166,7 +166,7 @@ describe('createSelfAttention', () => {
             'applyCausalSelfAttention attend au moins un vecteur.',
         )
         expect(() => attention.applyCausalSelfAttention([[1, 2, 3]])).toThrow(
-            "Le vecteur d'entree 0 doit avoir 2 dimensions. Dimension recue: 3.",
+            "Le vecteur d'entrée 0 doit avoir 2 dimensions. Dimension reçue: 3.",
         )
     })
 })

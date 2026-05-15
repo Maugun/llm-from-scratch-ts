@@ -1,14 +1,14 @@
 # Module 2 — Dataset loader
 
-Ce module lit un fichier `.txt`, encode son contenu avec un tokenizer, puis separe les ids
+Ce module lit un fichier `.txt`, encode son contenu avec un tokenizer, puis sépare les ids
 en deux parties: train et validation.
 
-Il ne construit pas encore de batch, de paire entree/cible, de tenseur ou de modele.
+Il ne construit pas encore de batch, de paire entrée/cible, de tenseur ou de modèle.
 
 ## Pourquoi ce module existe
 
-Un LLM apprend a partir de sequences observees. Avant de parler de probabilites ou de
-reseaux de neurones, il faut donc transformer un corpus texte en longue sequence d'ids:
+Un LLM apprend à partir de séquences observées. Avant de parler de probabilités ou de
+réseaux de neurones, il faut donc transformer un corpus texte en longue séquence d'ids:
 
 ```text
 fichier texte -> texte brut -> ids -> train / validation
@@ -19,35 +19,35 @@ dataset minimal.
 
 ## Pipeline
 
-Ce module depend volontairement du tokenizer:
+Ce module dépend volontairement du tokenizer:
 
 ```text
 1. Lire le fichier texte
-2. Construire le tokenizer a partir du texte
+2. Construire le tokenizer à partir du texte
 3. Encoder le texte avec ce tokenizer
-4. Separer les ids en train et validation
+4. Séparer les ids en train et validation
 ```
 
-On construit d'abord le tokenizer, car le dataset n'est pas une simple chaine de caracteres:
-c'est une sequence d'ids numeriques. Le loader fait donc le pont entre le texte brut et les
+On construit d'abord le tokenizer, car le dataset n'est pas une simple chaîne de caractères:
+c'est une séquence d'ids numériques. Le loader fait donc le pont entre le texte brut et les
 modules statistiques suivants.
 
 ## Concepts
 
 - **Fichier texte**: source lisible par un humain, ici un petit `.txt`.
-- **Texte brut**: contenu exact du fichier apres lecture UTF-8.
-- **Token ids**: sequence numerique produite par le tokenizer.
-- **Train split**: partie principale qui servira plus tard a apprendre.
-- **Validation split**: petite partie mise de cote pour observer si le modele generalise un peu.
+- **Texte brut**: contenu exact du fichier après lecture UTF-8.
+- **Token ids**: séquence numérique produite par le tokenizer.
+- **Train split**: partie principale qui servira plus tard à apprendre.
+- **Validation split**: petite partie mise de côté pour observer si le modèle généralise un peu.
 
-Mathematiquement, le corpus devient une sequence discrete:
+Mathématiquement, le corpus devient une séquence discrète:
 
 ```text
 x = [id0, id1, id2, id3, ...]
 ```
 
-Les modules suivants apprendront a exploiter cette sequence, mais ce module se limite a la
-preparer.
+Les modules suivants apprendront à exploiter cette séquence, mais ce module se limite à la
+préparer.
 
 ## Exemple
 
@@ -63,7 +63,7 @@ console.info(dataset.trainTokenIds)
 console.info(dataset.validationTokenIds)
 ```
 
-Pour lancer une demo executable:
+Pour lancer une démo exécutable:
 
 ```bash
 npm run demo:02-dataset
@@ -71,21 +71,21 @@ npm run demo:02-dataset
 
 ## Mini corpus
 
-Le fichier `data/tiny-corpus.txt` est volontairement court et repetitif. Il n'est pas fait
-pour produire un bon modele; il sert a voir clairement comment les motifs textuels deviennent
-des motifs dans une sequence d'ids.
+Le fichier `data/tiny-corpus.txt` est volontairement court et répétitif. Il n'est pas fait
+pour produire un bon modèle; il sert à voir clairement comment les motifs textuels deviennent
+des motifs dans une séquence d'ids.
 
-## Impact memoire / VRAM
+## Impact mémoire / VRAM
 
 Le loader charge tout le fichier en RAM CPU et garde les ids dans des tableaux JavaScript.
-Il ne cree aucun tenseur et n'utilise pas le GPU: la VRAM consommee est donc 0.
+Il ne crée aucun tenseur et n'utilise pas le GPU: la VRAM consommée est donc 0.
 
-Le compromis est assumé: c'est simple et lisible, mais pas adapte a de gros corpus.
+Le compromis est assumé: c'est simple et lisible, mais pas adapté à de gros corpus.
 
 ## Limites
 
-- Le fichier est lu entierement en memoire.
-- Le texte est suppose etre en UTF-8.
+- Le fichier est lu entièrement en mémoire.
+- Le texte est supposé être en UTF-8.
 - Il n'y a pas de streaming.
 - Il n'y a pas encore de batching.
-- Il n'y a pas encore de paires `(entree, cible)` pour l'entrainement.
+- Il n'y a pas encore de paires `(entrée, cible)` pour l'entraînement.

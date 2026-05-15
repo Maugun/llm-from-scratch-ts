@@ -2,6 +2,6 @@ bonjour llm.
 bonjour tout le monde.
 le chat dort.
 le chat mange.
-le modele apprend.
-le modele lit.
-bonjour modele.
+le modèle apprend.
+le modèle lit.
+bonjour modèle.

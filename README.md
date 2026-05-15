@@ -1,21 +1,21 @@
 # TypeScript LLM
 
-Mini LLM pedagogique en TypeScript pour comprendre progressivement le fonctionnement des
+Mini LLM pédagogique en TypeScript pour comprendre progressivement le fonctionnement des
 LLM modernes. Le but principal est l'apprentissage: le code doit rester simple, lisible,
-fortement commente et verifiable module par module.
+fortement commenté et vérifiable module par module.
 
 Ce projet ne vise pas la performance ni un usage production.
 
 ## Principes
 
-- Avancer un seul module a la fois.
-- Presenter le plan du module courant avant d'ecrire son code.
+- Avancer un seul module à la fois.
+- Présenter le plan du module courant avant d'écrire son code.
 - Attendre une validation explicite avant de passer au module suivant.
-- Expliquer le role theorique, les intuitions mathematiques, les compromis et les limites.
-- Garder une attention explicite sur la memoire et la VRAM.
-- Eviter les dependances inutiles.
+- Expliquer le rôle théorique, les intuitions mathématiques, les compromis et les limites.
+- Garder une attention explicite sur la mémoire et la VRAM.
+- Éviter les dépendances inutiles.
 
-## Roadmap pedagogique
+## Roadmap pédagogique
 
 1. Tokenizer simple
 2. Dataset loader
@@ -30,7 +30,7 @@ Ce projet ne vise pas la performance ni un usage production.
 11. Tool calling simple
 12. MCP connectors, optionnel
 
-## Prerequis
+## Prérequis
 
 - Node.js 24 LTS
 - npm 11
@@ -58,10 +58,10 @@ npm run demo:04-embeddings
 npm run demo:05-attention
 ```
 
-`npm test` accepte temporairement l'absence de tests. Les tests reels seront ajoutes avec
-les modules, quand ils apportent une verification utile.
+`npm test` accepte temporairement l'absence de tests. Les tests réels seront ajoutés avec
+les modules, quand ils apportent une vérification utile.
 
-Les scripts `demo:*` lancent de petits exemples executables pour manipuler chaque module
+Les scripts `demo:*` lancent de petits exemples exécutables pour manipuler chaque module
 comme dans un cours pratique.
 
 ## Structure
@@ -85,20 +85,20 @@ data/
   tiny-corpus.txt
 ```
 
-Les modules sont prefixes par numero pour rendre l'ordre pedagogique visible dans
+Les modules sont préfixés par numéro pour rendre l'ordre pédagogique visible dans
 l'explorateur de fichiers.
 
 ## Workflow pour chaque module
 
 Avant de coder un module, le plan doit couvrir:
 
-1. le but theorique du module;
+1. le but théorique du module;
 2. sa place dans un LLM;
-3. les concepts mathematiques utiles, expliques simplement;
+3. les concepts mathématiques utiles, expliqués simplement;
 4. l'architecture des fichiers;
-5. l'impact memoire et VRAM;
+5. l'impact mémoire et VRAM;
 6. les compromis;
-7. les tests simples prevus.
+7. les tests simples prévus.
 
-Apres implementation, le module doit inclure des explications, des commentaires
-pedagogiques et une verification locale adaptee.
+Après implémentation, le module doit inclure des explications, des commentaires
+pédagogiques et une vérification locale adaptée.

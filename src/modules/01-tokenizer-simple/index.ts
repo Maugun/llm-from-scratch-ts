@@ -2,32 +2,32 @@ export type CharacterTokenizer = {
     /**
      * Table lisible des symboles connus par le tokenizer.
      *
-     * Dans ce premier module, un token = un caractere JavaScript.
+     * Dans ce premier module, un token = un caractère JavaScript.
      * Les LLM modernes utilisent souvent des tokens plus grands, comme des morceaux de mots,
-     * mais le principe reste le meme: chaque token recoit un identifiant numerique.
+     * mais le principe reste le même: chaque token reçoit un identifiant numérique.
      */
     readonly vocabulary: readonly string[]
 
     /**
      * Nombre de tokens connus.
      *
-     * Plus le vocabulaire est grand, plus les futures tables de probabilites ou d'embeddings
+     * Plus le vocabulaire est grand, plus les futures tables de probabilités ou d'embeddings
      * devront contenir de lignes. Ici l'impact reste minuscule et uniquement CPU.
      */
     readonly vocabularySize: number
 
     /**
-     * Dictionnaire caractere -> id.
+     * Dictionnaire caractère -> id.
      *
-     * L'encodage transforme le texte brut en une sequence discrete d'entiers:
+     * L'encodage transforme le texte brut en une séquence discrète d'entiers:
      * "abc" devient par exemple [0, 1, 2].
      */
     readonly charToId: ReadonlyMap<string, number>
 
     /**
-     * Dictionnaire id -> caractere.
+     * Dictionnaire id -> caractère.
      *
-     * Le decodage fait l'operation inverse pour revenir a une chaine lisible.
+     * Le décodage fait l'opération inverse pour revenir à une chaîne lisible.
      */
     readonly idToChar: ReadonlyMap<number, string>
 
@@ -36,22 +36,22 @@ export type CharacterTokenizer = {
 }
 
 /**
- * Cree un tokenizer caractere a partir d'un texte de reference.
+ * Crée un tokenizer caractère à partir d'un texte de référence.
  *
  * Pourquoi un tokenizer existe dans un LLM ?
- * Un modele numerique ne sait pas manipuler directement une chaine de caracteres.
- * Il a besoin d'une entree sous forme de nombres. Le tokenizer est donc la frontiere
- * entre le monde lisible par les humains et le monde manipulable par le modele.
+ * Un modèle numérique ne sait pas manipuler directement une chaîne de caractères.
+ * Il a besoin d'une entrée sous forme de nombres. Le tokenizer est donc la frontière
+ * entre le monde lisible par les humains et le monde manipulable par le modèle.
  *
- * Intuition mathematique:
- * un texte est transforme en sequence finie d'entiers. Plus tard, chaque entier pourra
+ * Intuition mathématique:
+ * un texte est transformé en séquence finie d'entiers. Plus tard, chaque entier pourra
  * indexer une ligne dans une matrice d'embeddings, ou une colonne dans une distribution
- * de probabilites.
+ * de probabilités.
  *
- * Memoire / VRAM:
- * ce module ne cree aucun tenseur et n'utilise pas le GPU. La VRAM consommee est donc 0.
- * La RAM utilisee depend seulement du nombre de caracteres uniques et de la longueur
- * des sequences encodees.
+ * Mémoire / VRAM:
+ * ce module ne crée aucun tenseur et n'utilise pas le GPU. La VRAM consommée est donc 0.
+ * La RAM utilisée dépend seulement du nombre de caractères uniques et de la longueur
+ * des séquences encodées.
  */
 export function createCharacterTokenizer(trainingText: string): CharacterTokenizer {
     const vocabulary = Array.from(new Set(Array.from(trainingText))).sort()
@@ -83,7 +83,7 @@ function decodeCharacters(
         const character = idToChar.get(tokenId)
 
         if (character === undefined) {
-            throw new Error(`Impossible de decoder l'id inconnu ${String(tokenId)}.`)
+            throw new Error(`Impossible de décoder l'id inconnu ${String(tokenId)}.`)
         }
 
         characters.push(character)
@@ -99,7 +99,7 @@ function encodeCharacters(text: string, charToId: ReadonlyMap<string, number>): 
         const tokenId = charToId.get(character)
 
         if (tokenId === undefined) {
-            throw new Error(`Impossible d'encoder le caractere inconnu "${character}".`)
+            throw new Error(`Impossible d'encoder le caractère inconnu "${character}".`)
         }
 
         tokenIds.push(tokenId)

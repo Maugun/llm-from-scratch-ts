@@ -1,7 +1,7 @@
 {
     "name": "typescript-llm",
     "version": "0.1.0",
-    "description": "Mini LLM pedagogique en TypeScript pour comprendre progressivement les mecanismes des LLM modernes.",
+    "description": "Mini LLM pédagogique en TypeScript pour comprendre progressivement les mécanismes des LLM modernes.",
     "type": "module",
     "private": true,
     "packageManager": "npm@11.9.0",

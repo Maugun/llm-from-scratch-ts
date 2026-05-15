@@ -19,21 +19,21 @@ console.info('Module 4 - Embeddings CPU')
 console.info('')
 console.info('Pipeline:')
 console.info('1. Lire le fichier texte')
-console.info('2. Creer le tokenizer')
-console.info('3. Creer le dataset de tokens')
-console.info('4. Creer une table d embeddings')
+console.info('2. Créer le tokenizer')
+console.info('3. Créer le dataset de tokens')
+console.info("4. Créer une table d'embeddings")
 console.info('5. Remplacer des token ids par des vecteurs')
 console.info('')
 console.info(`Fichier lu: ${corpusPath}`)
-console.info(`Vocabulaire: ${String(tokenizer.vocabularySize)} caracteres`)
+console.info(`Vocabulaire: ${String(tokenizer.vocabularySize)} caractères`)
 console.info(`Dimension des embeddings: ${String(embeddingTable.embeddingDimension)}`)
 console.info(
-    `Chaque token est donc remplace par un vecteur de ${String(
+    `Chaque token est donc remplacé par un vecteur de ${String(
         embeddingTable.embeddingDimension,
     )} nombres.`,
 )
 console.info(
-    `Valeurs stockees dans la table: ${String(tokenizer.vocabularySize)} x ${String(
+    `Valeurs stockées dans la table: ${String(tokenizer.vocabularySize)} x ${String(
         embeddingTable.embeddingDimension,
     )} = ${String(tokenizer.vocabularySize * embeddingTable.embeddingDimension)} nombres.`,
 )
@@ -47,7 +47,7 @@ if (process.stdin.isTTY) {
 } else {
     console.info('')
     console.info(
-        "Mode non interactif detecte: lance cette demo dans un terminal pour choisir d'autres lettres.",
+        "Mode non interactif détecté: lance cette démo dans un terminal pour choisir d'autres lettres.",
     )
 }
 
@@ -59,7 +59,7 @@ function showEmbeddingsForText(textToEmbed: string): void {
     console.info('Token ids:')
     console.info(tokenIds)
     console.info('')
-    console.info('Vecteurs associes:')
+    console.info('Vecteurs associés:')
 
     for (const [index, vector] of embeddedSequence.entries()) {
         const tokenId = readTokenIdAt(tokenIds, index)
@@ -70,7 +70,7 @@ function showEmbeddingsForText(textToEmbed: string): void {
 
     if (embeddedSequence.length >= 2) {
         console.info('')
-        console.info('Similarite cosinus entre les deux premiers vecteurs:')
+        console.info('Similarité cosinus entre les deux premiers vecteurs:')
         console.info(
             cosineSimilarity(
                 readVectorAt(embeddedSequence, 0),
@@ -81,14 +81,14 @@ function showEmbeddingsForText(textToEmbed: string): void {
 
     console.info('')
     console.info(
-        "Ces vecteurs sont initialises, pas encore appris: la similarite n'a pas encore de sens linguistique fort.",
+        "Ces vecteurs sont initialisés, pas encore appris: la similarité n'a pas encore de sens linguistique fort.",
     )
 }
 
 async function startInteractivePrompt(): Promise<void> {
     console.info('')
     console.info('Choisis une ou plusieurs lettres du vocabulaire pour voir leurs embeddings.')
-    console.info('Appuie sur ENTREE pour valider, ou sur ESC pour quitter.')
+    console.info('Appuie sur ENTRÉE pour valider, ou sur ESC pour quitter.')
     console.info('')
 
     let currentInput = ''
@@ -104,7 +104,7 @@ async function startInteractivePrompt(): Promise<void> {
                 process.stdin.setRawMode(false)
                 process.stdin.pause()
                 console.info('')
-                console.info('Demo terminee.')
+                console.info('Démo terminée.')
                 resolve()
 
                 return
@@ -120,7 +120,7 @@ async function startInteractivePrompt(): Promise<void> {
                         showEmbeddingsForText(currentInput)
                     } catch {
                         console.info(
-                            `Le texte "${currentInput}" contient au moins un caractere absent du vocabulaire.`,
+                            `Le texte "${currentInput}" contient au moins un caractère absent du vocabulaire.`,
                         )
                     }
                 }
@@ -153,7 +153,7 @@ function readTokenIdAt(tokenIdsToRead: readonly number[], index: number): number
     const tokenId = tokenIdsToRead[index]
 
     if (tokenId === undefined) {
-        throw new Error(`Token introuvable a l'index ${String(index)}.`)
+        throw new Error(`Token introuvable à l'index ${String(index)}.`)
     }
 
     return tokenId
@@ -163,7 +163,7 @@ function readVectorAt(vectors: readonly (readonly number[])[], index: number): r
     const vector = vectors[index]
 
     if (vector === undefined) {
-        throw new Error(`Vecteur introuvable a l'index ${String(index)}.`)
+        throw new Error(`Vecteur introuvable à l'index ${String(index)}.`)
     }
 
     return vector

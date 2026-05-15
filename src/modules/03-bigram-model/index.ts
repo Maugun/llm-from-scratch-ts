@@ -1,33 +1,33 @@
 export type BigramModel = {
     /**
-     * Taille du vocabulaire utilisee pour dimensionner les matrices.
+     * Taille du vocabulaire utilisée pour dimensionner les matrices.
      *
-     * Avec un tokenizer caractere pedagogique, cette taille reste petite. Une matrice dense
-     * est donc lisible et acceptable pour apprendre, meme si elle serait trop couteuse pour
-     * de tres grands vocabulaires.
+     * Avec un tokenizer caractère pédagogique, cette taille reste petite. Une matrice dense
+     * est donc lisible et acceptable pour apprendre, même si elle serait trop coûteuse pour
+     * de très grands vocabulaires.
      */
     readonly vocabularySize: number
 
     /**
      * Matrice des comptages.
      *
-     * transitionCounts[current][next] contient le nombre de fois ou `next` apparait juste
-     * apres `current` dans la sequence d'apprentissage.
+     * transitionCounts[current][next] contient le nombre de fois où `next` apparaît juste
+     * après `current` dans la séquence d'apprentissage.
      */
     readonly transitionCounts: readonly (readonly number[])[]
 
     /**
-     * Matrice des probabilites conditionnelles.
+     * Matrice des probabilités conditionnelles.
      *
-     * transitionProbabilities[current][next] vaut P(next | current), c'est-a-dire:
+     * transitionProbabilities[current][next] vaut P(next | current), c'est-à-dire:
      * count(current, next) / count(current, *).
      */
     readonly transitionProbabilities: readonly (readonly number[])[]
 
     /**
-     * Nombre total de transitions observees.
+     * Nombre total de transitions observées.
      *
-     * Pour une sequence de N tokens, il y a au maximum N - 1 transitions.
+     * Pour une séquence de N tokens, il y a au maximum N - 1 transitions.
      */
     readonly totalTransitions: number
 
@@ -37,18 +37,18 @@ export type BigramModel = {
 }
 
 /**
- * Cree un modele bigramme a partir d'une sequence d'ids.
+ * Crée un modèle bigramme à partir d'une séquence d'ids.
  *
- * Un bigramme regarde uniquement le token courant pour predire le token suivant. Il ne
- * comprend pas le sens du texte: il compte seulement les transitions observees.
+ * Un bigramme regarde uniquement le token courant pour prédire le token suivant. Il ne
+ * comprend pas le sens du texte: il compte seulement les transitions observées.
  *
  * Formule centrale:
  * P(next | current) = count(current, next) / count(current, *)
  *
- * Memoire / VRAM:
- * ce module est CPU-only et n'utilise aucun tenseur. La VRAM reste donc a 0. La RAM depend
+ * Mémoire / VRAM:
+ * ce module est CPU-only et n'utilise aucun tenseur. La VRAM reste donc à 0. La RAM dépend
  * de vocabularySize x vocabularySize, car on stocke une matrice dense de comptages et une
- * matrice dense de probabilites.
+ * matrice dense de probabilités.
  */
 export function createBigramModel(
     tokenIds: readonly number[],
@@ -145,9 +145,9 @@ function predictMostLikelyNextToken(
 function validateTokenId(tokenId: number, vocabularySize: number): void {
     if (!Number.isInteger(tokenId) || tokenId < 0 || tokenId >= vocabularySize) {
         throw new Error(
-            `tokenId doit etre un entier entre 0 et ${String(
+            `tokenId doit être un entier entre 0 et ${String(
                 vocabularySize - 1,
-            )}. Valeur recue: ${String(tokenId)}.`,
+            )}. Valeur reçue: ${String(tokenId)}.`,
         )
     }
 }
@@ -179,7 +179,7 @@ function readNumberAt(values: readonly number[], index: number): number {
     const value = values[index]
 
     if (value === undefined) {
-        throw new Error(`Valeur introuvable a l'index ${String(index)}.`)
+        throw new Error(`Valeur introuvable à l'index ${String(index)}.`)
     }
 
     return value
@@ -189,7 +189,7 @@ function readTokenIdAt(tokenIds: readonly number[], index: number): number {
     const tokenId = tokenIds[index]
 
     if (tokenId === undefined) {
-        throw new Error(`Token introuvable a l'index ${String(index)}.`)
+        throw new Error(`Token introuvable à l'index ${String(index)}.`)
     }
 
     return tokenId
@@ -204,7 +204,7 @@ function validateTokenIds(tokenIds: readonly number[], vocabularySize: number): 
 function validateVocabularySize(vocabularySize: number): void {
     if (!Number.isInteger(vocabularySize) || vocabularySize <= 0) {
         throw new Error(
-            `vocabularySize doit etre un entier strictement positif. Valeur recue: ${String(
+            `vocabularySize doit être un entier strictement positif. Valeur reçue: ${String(
                 vocabularySize,
             )}.`,
         )

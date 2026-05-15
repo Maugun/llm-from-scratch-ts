@@ -25,12 +25,12 @@ describe('loadTextFile', () => {
     it('lit correctement un fichier .txt UTF-8 temporaire', async () => {
         const filePath = join(temporaryDirectory, 'sample.txt')
 
-        await writeFile(filePath, 'bonjour modele\n', 'utf8')
+        await writeFile(filePath, 'bonjour modèle\n', 'utf8')
 
-        await expect(loadTextFile(filePath)).resolves.toBe('bonjour modele\n')
+        await expect(loadTextFile(filePath)).resolves.toBe('bonjour modèle\n')
     })
 
-    it("echoue avec l'erreur Node standard si le fichier n'existe pas", async () => {
+    it("échoue avec l'erreur Node standard si le fichier n'existe pas", async () => {
         const filePath = join(temporaryDirectory, 'missing.txt')
 
         await expect(loadTextFile(filePath)).rejects.toMatchObject({ code: 'ENOENT' })
@@ -47,7 +47,7 @@ describe('createTokenDataset', () => {
         expect(dataset.tokenIds).toEqual([0, 1, 2, 3, 4])
     })
 
-    it('cree un split train/validation deterministe', () => {
+    it('crée un split train/validation déterministe', () => {
         const rawText = 'abcdefghij'
         const tokenizer = createCharacterTokenizer(rawText)
 
@@ -82,13 +82,13 @@ describe('createTokenDataset', () => {
         const tokenizer = createCharacterTokenizer('abc')
 
         expect(() => createTokenDataset('abc', tokenizer, { validationRatio: 1 })).toThrow(
-            'validationRatio doit etre un nombre fini superieur ou egal a 0 et strictement inferieur a 1.',
+            'validationRatio doit être un nombre fini supérieur ou égal à 0 et strictement inférieur à 1.',
         )
         expect(() => createTokenDataset('abc', tokenizer, { validationRatio: -0.1 })).toThrow(
-            'validationRatio doit etre un nombre fini superieur ou egal a 0 et strictement inferieur a 1.',
+            'validationRatio doit être un nombre fini supérieur ou égal à 0 et strictement inférieur à 1.',
         )
         expect(() => createTokenDataset('abc', tokenizer, { validationRatio: Number.NaN })).toThrow(
-            'validationRatio doit etre un nombre fini superieur ou egal a 0 et strictement inferieur a 1.',
+            'validationRatio doit être un nombre fini supérieur ou égal à 0 et strictement inférieur à 1.',
         )
     })
 
@@ -96,7 +96,7 @@ describe('createTokenDataset', () => {
         const tokenizer = createCharacterTokenizer('abc')
 
         expect(() => createTokenDataset('abcd', tokenizer)).toThrow(
-            'Impossible d\'encoder le caractere inconnu "d".',
+            'Impossible d\'encoder le caractère inconnu "d".',
         )
     })
 })
@@ -119,7 +119,7 @@ describe('loadTokenDatasetFromFile', () => {
         expect(dataset.validationTokenCount).toBe(2)
     })
 
-    it('charge et encode le mini corpus versionne', async () => {
+    it('charge et encode le mini corpus versionné', async () => {
         const filePath = join(process.cwd(), 'data', 'tiny-corpus.txt')
         const rawText = await loadTextFile(filePath)
         const tokenizer = createCharacterTokenizer(rawText)

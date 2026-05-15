@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { cosineSimilarity, createEmbeddingTable } from '../../src/modules/04-embeddings/index.js'
 
 describe('createEmbeddingTable', () => {
-    it('cree une table aux bonnes dimensions', () => {
+    it('crée une table aux bonnes dimensions', () => {
         const table = createEmbeddingTable({
             embeddingDimension: 4,
             vocabularySize: 3,
@@ -15,7 +15,7 @@ describe('createEmbeddingTable', () => {
         expect(table.embeddingDimension).toBe(4)
     })
 
-    it('initialise deterministiquement avec le meme seed', () => {
+    it("s'initialise déterministiquement avec le même seed", () => {
         const tableA = createEmbeddingTable({
             embeddingDimension: 3,
             seed: 123,
@@ -30,7 +30,7 @@ describe('createEmbeddingTable', () => {
         expect(tableA.vectors).toEqual(tableB.vectors)
     })
 
-    it('produit des valeurs differentes avec des seeds differents', () => {
+    it('produit des valeurs différentes avec des seeds différents', () => {
         const tableA = createEmbeddingTable({
             embeddingDimension: 3,
             seed: 123,
@@ -55,7 +55,7 @@ describe('createEmbeddingTable', () => {
         expect(table.getEmbedding(1)).toBe(table.vectors[1])
     })
 
-    it('transforme une sequence de token ids en sequence de vecteurs', () => {
+    it('transforme une séquence de token ids en séquence de vecteurs', () => {
         const table = createEmbeddingTable({
             embeddingDimension: 2,
             seed: 123,
@@ -71,7 +71,7 @@ describe('createEmbeddingTable', () => {
                 embeddingDimension: 2,
                 vocabularySize: 0,
             }),
-        ).toThrow('vocabularySize doit etre un entier strictement positif.')
+        ).toThrow('vocabularySize doit être un entier strictement positif.')
     })
 
     it('rejette une embeddingDimension invalide', () => {
@@ -80,7 +80,7 @@ describe('createEmbeddingTable', () => {
                 embeddingDimension: 0,
                 vocabularySize: 2,
             }),
-        ).toThrow('embeddingDimension doit etre un entier strictement positif.')
+        ).toThrow('embeddingDimension doit être un entier strictement positif.')
     })
 
     it('rejette un token id hors vocabulaire', () => {
@@ -90,10 +90,10 @@ describe('createEmbeddingTable', () => {
         })
 
         expect(() => table.getEmbedding(2)).toThrow(
-            'tokenId doit etre un entier entre 0 et 1. Valeur recue: 2.',
+            'tokenId doit être un entier entre 0 et 1. Valeur reçue: 2.',
         )
         expect(() => table.embedSequence([0, 2])).toThrow(
-            'tokenId doit etre un entier entre 0 et 1. Valeur recue: 2.',
+            'tokenId doit être un entier entre 0 et 1. Valeur reçue: 2.',
         )
     })
 })
@@ -107,9 +107,9 @@ describe('cosineSimilarity', () => {
         expect(cosineSimilarity([1, 0], [0, 1])).toBe(0)
     })
 
-    it("rejette deux vecteurs qui n'ont pas la meme dimension", () => {
+    it("rejette deux vecteurs qui n'ont pas la même dimension", () => {
         expect(() => cosineSimilarity([1, 2], [1])).toThrow(
-            'Les deux vecteurs doivent avoir la meme dimension.',
+            'Les deux vecteurs doivent avoir la même dimension.',
         )
     })
 

@@ -19,7 +19,7 @@ describe('createCharacterTokenizer', () => {
         ])
     })
 
-    it('encode puis decode un texte connu sans perte', () => {
+    it('encode puis décode un texte connu sans perte', () => {
         const tokenizer = createCharacterTokenizer('hello world')
         const tokenIds = tokenizer.encode('hello')
 
@@ -33,21 +33,21 @@ describe('createCharacterTokenizer', () => {
         expect(tokenizer.vocabularySize).toBe(3)
     })
 
-    it("echoue clairement lorsqu'un caractere est absent du vocabulaire", () => {
+    it("échoue clairement lorsqu'un caractère est absent du vocabulaire", () => {
         const tokenizer = createCharacterTokenizer('abc')
 
         expect(() => tokenizer.encode('abcd')).toThrow(
-            'Impossible d\'encoder le caractere inconnu "d".',
+            'Impossible d\'encoder le caractère inconnu "d".',
         )
     })
 
-    it("echoue clairement lorsqu'un id est absent du vocabulaire", () => {
+    it("échoue clairement lorsqu'un id est absent du vocabulaire", () => {
         const tokenizer = createCharacterTokenizer('abc')
 
-        expect(() => tokenizer.decode([0, 3])).toThrow("Impossible de decoder l'id inconnu 3.")
+        expect(() => tokenizer.decode([0, 3])).toThrow("Impossible de décoder l'id inconnu 3.")
     })
 
-    it('traite les espaces et la ponctuation comme des caracteres normaux', () => {
+    it('traite les espaces et la ponctuation comme des caractères normaux', () => {
         const tokenizer = createCharacterTokenizer('Salut, LLM !')
         const text = 'LLM !'
 
@@ -57,14 +57,14 @@ describe('createCharacterTokenizer', () => {
         expect(tokenizer.vocabulary).toContain(',')
     })
 
-    it('documente le comportement avec un texte de reference vide', () => {
+    it('documente le comportement avec un texte de référence vide', () => {
         const tokenizer = createCharacterTokenizer('')
 
         expect(tokenizer.vocabulary).toEqual([])
         expect(tokenizer.vocabularySize).toBe(0)
         expect(tokenizer.decode([])).toBe('')
         expect(() => tokenizer.encode('a')).toThrow(
-            'Impossible d\'encoder le caractere inconnu "a".',
+            'Impossible d\'encoder le caractère inconnu "a".',
         )
     })
 })
