@@ -54,6 +54,7 @@ npm test
 npm run demo:01-tokenizer
 npm run demo:02-dataset
 npm run demo:03-bigram
+npm run demo:04-embeddings
 ```
 
 `npm test` accepte temporairement l'absence de tests. Les tests reels seront ajoutes avec
@@ -71,10 +72,12 @@ src/
     01-tokenizer-simple/
     02-dataset-loader/
     03-bigram-model/
+    04-embeddings/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
   03-bigram-model/
+  04-embeddings/
 data/
   tiny-corpus.txt
 ```

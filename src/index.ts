@@ -31,3 +31,6 @@ export type {
 
 export { createBigramModel } from './modules/03-bigram-model/index.js'
 export type { BigramModel } from './modules/03-bigram-model/index.js'
+
+export { cosineSimilarity, createEmbeddingTable } from './modules/04-embeddings/index.js'
+export type { EmbeddingTable, EmbeddingTableOptions } from './modules/04-embeddings/index.js'
