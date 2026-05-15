@@ -32,6 +32,32 @@ On construit d'abord le tokenizer, car le dataset n'est pas une simple chaîne d
 c'est une séquence d'ids numériques. Le loader fait donc le pont entre le texte brut et les
 modules statistiques suivants.
 
+## Schéma progressif
+
+```mermaid
+flowchart TB
+    file["Fichier texte<br/>data/tiny-corpus.txt"]
+    rawText["Texte brut<br/>chargé en RAM CPU"]
+    tokenizer["Tokenizer caractère<br/>module 1"]
+    ids["Token ids<br/>séquence discrète"]
+
+    subgraph dataset["Dataset loader<br/>module 2"]
+        split["Split déterministe"]
+        train["Train ids"]
+        validation["Validation ids"]
+        split --> train
+        split --> validation
+    end
+
+    file --> rawText --> tokenizer --> ids --> split
+
+    classDef current fill:#fff3bf,stroke:#f59f00,color:#000;
+    class split,train,validation current;
+```
+
+Le module 2 ajoute l'organisation du corpus: les ids ne sont plus seulement une liste brute,
+ils sont séparés en données d'apprentissage et de validation.
+
 ## Concepts
 
 - **Fichier texte**: source lisible par un humain, ici un petit `.txt`.

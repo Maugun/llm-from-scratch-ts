@@ -37,6 +37,31 @@ l'apprentissage. Il compte ensuite les paires consécutives:
 [id0, id1, id2] -> (id0, id1), (id1, id2)
 ```
 
+## Schéma progressif
+
+```mermaid
+flowchart TB
+    file["Fichier texte"]
+    tokenizer["Tokenizer<br/>texte -> ids"]
+    dataset["Dataset loader<br/>train / validation"]
+    train["Train ids"]
+
+    subgraph bigram["Bigram model<br/>module 3"]
+        counts["Comptages<br/>count(current, next)"]
+        probabilities["Normalisation<br/>P(next | current)"]
+        prediction["Prédiction<br/>token suivant le plus probable"]
+        counts --> probabilities --> prediction
+    end
+
+    file --> tokenizer --> dataset --> train --> counts
+
+    classDef current fill:#fff3bf,stroke:#f59f00,color:#000;
+    class counts,probabilities,prediction current;
+```
+
+Le module 3 ajoute une première notion de modèle: il observe les transitions du corpus et en
+déduit des probabilités conditionnelles très simples.
+
 ## Concepts
 
 - **Comptage**: nombre d'apparitions d'une transition `current -> next`.

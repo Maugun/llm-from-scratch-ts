@@ -9,6 +9,23 @@ Un LLM ne manipule pas directement du texte brut. Les calculs d'un modèle se fo
 nombres. Le tokenizer convertit donc une chaîne lisible par un humain en séquence discrète
 d'entiers utilisable par les prochains modules.
 
+## Schéma progressif
+
+```mermaid
+flowchart TB
+    input["Texte brut<br/>'bonjour'"]
+    tokenizer["Tokenizer caractère<br/>construit le vocabulaire<br/>encode / decode"]
+    ids["Token ids<br/>[0, 1, 2, ...]"]
+
+    input --> tokenizer --> ids
+
+    classDef current fill:#fff3bf,stroke:#f59f00,color:#000;
+    class tokenizer current;
+```
+
+À ce stade, le projet sait seulement transformer du texte lisible en ids numériques, puis
+revenir des ids vers le texte.
+
 ## Concepts
 
 - **Token**: unité discrète manipulée par le modèle. Ici, un caractère.

@@ -49,6 +49,42 @@ Il existe aussi des blocs `post-norm`, où la normalisation arrive après la sou
 connexion résiduelle. Ici on choisit `pre-norm` parce que beaucoup de LLM modernes tendent
 vers ce choix, notamment pour faciliter la stabilité quand on empile beaucoup de blocs.
 
+## Schéma progressif
+
+```mermaid
+flowchart TB
+    file["Fichier texte"]
+    tokenizer["Tokenizer<br/>texte -> ids"]
+    dataset["Dataset loader<br/>train / validation"]
+    ids["Token ids"]
+    embeddings["Embeddings<br/>ids -> vecteurs"]
+    inputVectors["Vecteurs d'entrée"]
+
+    subgraph block["Transformer block<br/>module 6"]
+        normAttention["LayerNorm"]
+        attention["Self-attention causale"]
+        projection["Projection de sortie"]
+        addAttention["Add<br/>résiduel + correction attention"]
+        normFeedForward["LayerNorm"]
+        feedForward["Feed-forward"]
+        addFeedForward["Add<br/>résiduel + correction locale"]
+        output["Vecteurs transformés"]
+
+        normAttention --> attention --> projection --> addAttention
+        addAttention --> normFeedForward --> feedForward --> addFeedForward --> output
+    end
+
+    file --> tokenizer --> dataset --> ids --> embeddings --> inputVectors --> normAttention
+    inputVectors --> addAttention
+    addAttention --> addFeedForward
+
+    classDef current fill:#fff3bf,stroke:#f59f00,color:#000;
+    class normAttention,attention,projection,addAttention,normFeedForward,feedForward,addFeedForward,output current;
+```
+
+Le module 6 regroupe plusieurs opérations autour de l'attention: normalisation, correction
+résiduelle et transformation locale par feed-forward.
+
 Visuellement, une position traverse le bloc comme ceci:
 
 ```mermaid

@@ -28,6 +28,31 @@ Ce module arrive après le tokenizer et le dataset loader:
 Le module ne modifie pas encore les vecteurs par apprentissage. Il crée seulement une table
 initialisée de façon déterministe pour rendre le mécanisme observable.
 
+## Schéma progressif
+
+```mermaid
+flowchart TB
+    file["Fichier texte"]
+    tokenizer["Tokenizer<br/>texte -> ids"]
+    dataset["Dataset loader<br/>train / validation"]
+    ids["Token ids<br/>entiers discrets"]
+
+    subgraph embeddings["Embeddings<br/>module 4"]
+        table["Table d'embeddings<br/>vocabularySize x embeddingDimension"]
+        lookup["Lookup<br/>embeddingTable[tokenId]"]
+        vectors["Vecteurs<br/>un vecteur par token"]
+        table --> lookup --> vectors
+    end
+
+    file --> tokenizer --> dataset --> ids --> table
+
+    classDef current fill:#fff3bf,stroke:#f59f00,color:#000;
+    class table,lookup,vectors current;
+```
+
+Le module 4 change la représentation: les ids restent des indices discrets, mais chaque id
+peut maintenant être remplacé par un vecteur numérique.
+
 ## Concepts
 
 - **Embedding**: vecteur associé à un token.

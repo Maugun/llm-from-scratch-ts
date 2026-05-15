@@ -74,6 +74,35 @@ Ce module arrive après les embeddings:
 5. Appliquer la self-attention causale sur ces vecteurs
 ```
 
+## Schéma progressif
+
+```mermaid
+flowchart TB
+    file["Fichier texte"]
+    tokenizer["Tokenizer<br/>texte -> ids"]
+    dataset["Dataset loader<br/>train / validation"]
+    ids["Token ids"]
+    embeddings["Embeddings<br/>ids -> vecteurs"]
+    vectors["Vecteurs d'entrée"]
+
+    subgraph attention["Self-attention causale<br/>module 5"]
+        qkv["Projections Q / K / V"]
+        scores["Scores masqués<br/>pas de futur"]
+        softmax["Softmax<br/>poids d'attention"]
+        mix["Somme pondérée des values"]
+        contextualized["Vecteurs contextualisés"]
+        qkv --> scores --> softmax --> mix --> contextualized
+    end
+
+    file --> tokenizer --> dataset --> ids --> embeddings --> vectors --> qkv
+
+    classDef current fill:#fff3bf,stroke:#f59f00,color:#000;
+    class qkv,scores,softmax,mix,contextualized current;
+```
+
+Le module 5 ajoute la communication entre positions: chaque vecteur peut mélanger des
+informations venant des positions précédentes autorisées par le masque causal.
+
 ## Concepts
 
 - **Query (Q)**: ce que la position cherche.
