@@ -17,6 +17,21 @@ fichier texte -> texte brut -> ids -> train / validation
 Le module 1 convertissait du texte en nombres. Ce module organise ces nombres comme un
 dataset minimal.
 
+## Pipeline
+
+Ce module depend volontairement du tokenizer:
+
+```text
+1. Lire le fichier texte
+2. Construire le tokenizer a partir du texte
+3. Encoder le texte avec ce tokenizer
+4. Separer les ids en train et validation
+```
+
+On construit d'abord le tokenizer, car le dataset n'est pas une simple chaine de caracteres:
+c'est une sequence d'ids numeriques. Le loader fait donc le pont entre le texte brut et les
+modules statistiques suivants.
+
 ## Concepts
 
 - **Fichier texte**: source lisible par un humain, ici un petit `.txt`.

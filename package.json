@@ -13,6 +13,7 @@
         "build": "tsc -p tsconfig.build.json",
         "demo:01-tokenizer": "tsx src/modules/01-tokenizer-simple/demo.ts",
         "demo:02-dataset": "tsx src/modules/02-dataset-loader/demo.ts",
+        "demo:03-bigram": "tsx src/modules/03-bigram-model/demo.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "lint": "eslint .",

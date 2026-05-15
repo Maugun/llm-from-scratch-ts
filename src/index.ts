@@ -28,3 +28,6 @@ export type {
     TokenDataset,
     TokenDatasetOptions,
 } from './modules/02-dataset-loader/index.js'
+
+export { createBigramModel } from './modules/03-bigram-model/index.js'
+export type { BigramModel } from './modules/03-bigram-model/index.js'

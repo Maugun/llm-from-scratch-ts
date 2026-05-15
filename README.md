@@ -53,6 +53,7 @@ npm run format:check
 npm test
 npm run demo:01-tokenizer
 npm run demo:02-dataset
+npm run demo:03-bigram
 ```
 
 `npm test` accepte temporairement l'absence de tests. Les tests reels seront ajoutes avec
@@ -69,9 +70,11 @@ src/
   modules/
     01-tokenizer-simple/
     02-dataset-loader/
+    03-bigram-model/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
+  03-bigram-model/
 data/
   tiny-corpus.txt
 ```
