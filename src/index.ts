@@ -17,3 +17,14 @@ export const moduleRoadmap = [
 
 export { createCharacterTokenizer } from './modules/tokenizer-simple/index.js'
 export type { CharacterTokenizer } from './modules/tokenizer-simple/index.js'
+
+export {
+    createTokenDataset,
+    loadTextFile,
+    loadTokenDatasetFromFile,
+} from './modules/dataset-loader/index.js'
+export type {
+    TextTokenizer,
+    TokenDataset,
+    TokenDatasetOptions,
+} from './modules/dataset-loader/index.js'

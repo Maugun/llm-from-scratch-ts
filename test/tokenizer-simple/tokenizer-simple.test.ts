@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { createCharacterTokenizer } from '../src/modules/tokenizer-simple/index.js'
+import { createCharacterTokenizer } from '../../src/modules/tokenizer-simple/index.js'
 
 describe('createCharacterTokenizer', () => {
     it('construit un vocabulaire trié et stable depuis un texte simple', () => {
