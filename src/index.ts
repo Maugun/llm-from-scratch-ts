@@ -34,3 +34,15 @@ export type { BigramModel } from './modules/03-bigram-model/index.js'
 
 export { cosineSimilarity, createEmbeddingTable } from './modules/04-embeddings/index.js'
 export type { EmbeddingTable, EmbeddingTableOptions } from './modules/04-embeddings/index.js'
+
+export {
+    createSelfAttention,
+    dotProduct,
+    multiplyMatrixVector,
+    softmax,
+} from './modules/05-self-attention/index.js'
+export type {
+    AttentionApplication,
+    SelfAttention,
+    SelfAttentionOptions,
+} from './modules/05-self-attention/index.js'
