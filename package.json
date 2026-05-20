@@ -27,6 +27,7 @@
         "demo:14-mini-transformer": "tsx src/modules/14-trainable-mini-transformer/demo.ts",
         "demo:15-model-sizing": "tsx src/modules/15-model-sizing-memory-estimator/demo.ts",
         "demo:16-tfjs-node-gpu": "tsx src/modules/16-tfjs-node-gpu-backend/demo.ts",
+        "demo:17-long-corpus": "tsx src/modules/17-long-corpus-pipeline/demo.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "gpu:demo": "npm run demo:16-tfjs-node-gpu",

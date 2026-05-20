@@ -223,3 +223,27 @@ export type {
     TfjsNodeGpuBenchmarkResult,
     TfjsNodeGpuSmokeTestResult,
 } from './modules/16-tfjs-node-gpu-backend/index.js'
+
+export {
+    createLongCorpusPipeline,
+    disposeTensorNextTokenBatch,
+    estimateNextTokenExampleCount,
+    getBatchCount,
+    iterateNextTokenBatches,
+    loadLongCorpusText,
+    loadPreparedLongCorpusDataset,
+    nextTokenBatchToTensors,
+    savePreparedLongCorpusDataset,
+} from './modules/17-long-corpus-pipeline/index.js'
+export type {
+    LongCorpusPipeline,
+    LongCorpusPipelineOptions,
+    LongCorpusStats,
+    LongCorpusText,
+    LongCorpusTokenizer,
+    NextTokenBatch,
+    NextTokenBatchOptions,
+    PreparedLongCorpusDataset,
+    SavePreparedLongCorpusDatasetOptions,
+    TensorNextTokenBatch,
+} from './modules/17-long-corpus-pipeline/index.js'

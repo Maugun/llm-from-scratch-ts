@@ -87,6 +87,7 @@ npm run demo:13-tfjs-next-token
 npm run demo:14-mini-transformer
 npm run demo:15-model-sizing
 npm run demo:16-tfjs-node-gpu
+npm run demo:17-long-corpus
 npm run gpu:install
 npm run gpu:demo
 ```
@@ -119,6 +120,7 @@ src/
     14-trainable-mini-transformer/
     15-model-sizing-memory-estimator/
     16-tfjs-node-gpu-backend/
+    17-long-corpus-pipeline/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
@@ -136,8 +138,11 @@ test/
   14-trainable-mini-transformer/
   15-model-sizing-memory-estimator/
   16-tfjs-node-gpu-backend/
+  17-long-corpus-pipeline/
 data/
   tiny-corpus.txt
+  private/      # ignoré par Git, pour les corpus locaux
+  cache/        # ignoré par Git, pour les datasets préparés localement
 ```
 
 Les modules sont préfixés par numéro pour rendre l'ordre pédagogique visible dans
