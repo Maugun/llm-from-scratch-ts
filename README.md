@@ -71,6 +71,7 @@ npm run demo:11-sampling
 npm run demo:12-tfjs-autograd
 npm run demo:13-tfjs-next-token
 npm run demo:14-mini-transformer
+npm run demo:15-model-sizing
 ```
 
 `npm test` accepte temporairement l'absence de tests. Les tests réels seront ajoutés avec
@@ -99,6 +100,7 @@ src/
     12-tensorflow-autograd/
     13-tfjs-next-token-model/
     14-trainable-mini-transformer/
+    15-model-sizing-memory-estimator/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
@@ -114,6 +116,7 @@ test/
   12-tensorflow-autograd/
   13-tfjs-next-token-model/
   14-trainable-mini-transformer/
+  15-model-sizing-memory-estimator/
 data/
   tiny-corpus.txt
 ```

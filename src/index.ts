@@ -194,3 +194,18 @@ export type {
     TrainableMiniTransformer,
     TrainableMiniTransformerOptions,
 } from './modules/14-trainable-mini-transformer/index.js'
+
+export {
+    compareModelSizes,
+    estimateMiniTransformerSize,
+    formatBytes,
+    formatParameterCount,
+} from './modules/15-model-sizing-memory-estimator/index.js'
+export type {
+    AttentionCostEstimate,
+    MemoryEstimate,
+    ModelSizeConfig,
+    ModelSizeEstimate,
+    NormalizedModelSizeConfig,
+    ParameterGroupEstimate,
+} from './modules/15-model-sizing-memory-estimator/index.js'
