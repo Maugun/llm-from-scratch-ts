@@ -90,3 +90,17 @@ export type {
     TrainableTokenBiasModelOptions,
     TrainableNextTokenModel,
 } from './modules/08-training-loop-cpu/index.js'
+
+export {
+    computeAverageLoss as computeMinimalLanguageModelAverageLoss,
+    createMinimalLanguageModel,
+    predictMostLikelyNextToken,
+    predictNextTokenProbabilities as predictMinimalLanguageModelNextTokenProbabilities,
+    trainMinimalLanguageModel,
+} from './modules/09-minimal-trainable-language-model/index.js'
+export type {
+    MinimalLanguageModel,
+    MinimalLanguageModelEpochMetrics,
+    MinimalLanguageModelOptions,
+    MinimalLanguageModelTrainingHistory,
+} from './modules/09-minimal-trainable-language-model/index.js'

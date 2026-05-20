@@ -19,6 +19,7 @@
         "demo:06-transformer-block": "tsx src/modules/06-transformer-block/demo.ts",
         "demo:07-positional-encoding": "tsx src/modules/07-positional-encoding/demo.ts",
         "demo:08-training-loop": "tsx src/modules/08-training-loop-cpu/demo.ts",
+        "demo:09-minimal-lm": "tsx src/modules/09-minimal-trainable-language-model/demo.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "lint": "eslint .",

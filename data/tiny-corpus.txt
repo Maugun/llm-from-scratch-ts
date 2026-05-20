@@ -5,3 +5,8 @@ le chat mange.
 le modèle apprend.
 le modèle lit.
 bonjour modèle.
+bonjour le chat.
+le modèle prédit.
+le modèle apprend vite.
+le chat lit.
+le chat code.
