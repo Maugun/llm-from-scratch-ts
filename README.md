@@ -32,22 +32,35 @@ Ce projet ne vise pas la performance ni un usage production.
 13. Modèle next-token TensorFlow.js
 14. Mini Transformer entraînable + génération greedy
 15. Estimation mémoire et taille de modèle
-16. Backend @tensorflow/tfjs-node
+16. Backend GPU @tensorflow/tfjs-node-gpu
 17. Pipeline long corpus
 18. Entraînement d'un petit vrai modèle
 
 ## Prérequis
 
-- Node.js 24 LTS
-- npm 11
+- Node.js 20 LTS ou 24 LTS
+- npm 10 ou 11
 
-Le fichier `.nvmrc` indique la ligne Node attendue.
+Le fichier `.nvmrc` indique Node 20, car les bindings natifs TensorFlow.js GPU sont plus fiables
+sur une version LTS largement supportée. Node 24 reste utilisable pour les modules sans backend
+natif GPU, mais Node 20 est recommandé pour `@tensorflow/tfjs-node-gpu`.
 
 ## Installation
 
 ```bash
 npm install
 ```
+
+Le module 16 utilise un backend GPU optionnel. `@tensorflow/tfjs-node-gpu` n’est pas installé par
+défaut, car il dépend de CUDA/Linux et ne convient pas à toutes les machines. Pour ce module,
+installe-le uniquement dans un environnement compatible, depuis WSL ou Linux:
+
+```bash
+npm install @tensorflow/tfjs-node-gpu@4.22.0 --no-save
+```
+
+Cette commande installe le backend GPU localement sans l’ajouter aux dépendances versionnées du
+projet.
 
 ## Scripts
 
@@ -72,6 +85,7 @@ npm run demo:12-tfjs-autograd
 npm run demo:13-tfjs-next-token
 npm run demo:14-mini-transformer
 npm run demo:15-model-sizing
+npm run demo:16-tfjs-node-gpu
 ```
 
 `npm test` accepte temporairement l'absence de tests. Les tests réels seront ajoutés avec
@@ -101,6 +115,7 @@ src/
     13-tfjs-next-token-model/
     14-trainable-mini-transformer/
     15-model-sizing-memory-estimator/
+    16-tfjs-node-gpu-backend/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
@@ -117,6 +132,7 @@ test/
   13-tfjs-next-token-model/
   14-trainable-mini-transformer/
   15-model-sizing-memory-estimator/
+  16-tfjs-node-gpu-backend/
 data/
   tiny-corpus.txt
 ```

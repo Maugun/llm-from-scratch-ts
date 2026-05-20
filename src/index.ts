@@ -16,7 +16,7 @@ export const moduleRoadmap = [
     '13-tfjs-next-token-model',
     '14-trainable-mini-transformer',
     '15-model-sizing-memory-estimator',
-    '16-tfjs-node-backend',
+    '16-tfjs-node-gpu-backend',
     '17-long-corpus-pipeline',
     '18-small-real-model-training',
 ] as const
@@ -209,3 +209,17 @@ export type {
     NormalizedModelSizeConfig,
     ParameterGroupEstimate,
 } from './modules/15-model-sizing-memory-estimator/index.js'
+
+export {
+    benchmarkTfjsNodeGpuMatMul,
+    getRuntimeEnvironmentInfo,
+    loadTfjsNodeGpuBackend,
+    runTfjsNodeGpuSmokeTest,
+} from './modules/16-tfjs-node-gpu-backend/index.js'
+export type {
+    RuntimeEnvironmentInfo,
+    TfjsNodeGpuBackendLoadResult,
+    TfjsNodeGpuBenchmarkOptions,
+    TfjsNodeGpuBenchmarkResult,
+    TfjsNodeGpuSmokeTestResult,
+} from './modules/16-tfjs-node-gpu-backend/index.js'

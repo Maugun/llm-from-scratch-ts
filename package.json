@@ -4,10 +4,10 @@
     "description": "Mini LLM pédagogique en TypeScript pour comprendre progressivement les mécanismes des LLM modernes.",
     "type": "module",
     "private": true,
-    "packageManager": "npm@11.9.0",
+    "packageManager": "npm@10.8.2",
     "engines": {
-        "node": ">=24 <25",
-        "npm": ">=11"
+        "node": ">=20 <25",
+        "npm": ">=10 <12"
     },
     "scripts": {
         "build": "tsc -p tsconfig.build.json",
@@ -26,6 +26,7 @@
         "demo:13-tfjs-next-token": "tsx src/modules/13-tfjs-next-token-model/demo.ts",
         "demo:14-mini-transformer": "tsx src/modules/14-trainable-mini-transformer/demo.ts",
         "demo:15-model-sizing": "tsx src/modules/15-model-sizing-memory-estimator/demo.ts",
+        "demo:16-tfjs-node-gpu": "tsx src/modules/16-tfjs-node-gpu-backend/demo.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "lint": "eslint .",
@@ -36,7 +37,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.39.4",
-        "@types/node": "^24.10.1",
+        "@types/node": "^20.19.41",
         "eslint": "^9.39.4",
         "eslint-config-prettier": "^10.1.8",
         "globals": "^17.4.0",
