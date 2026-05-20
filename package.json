@@ -21,6 +21,7 @@
         "demo:08-training-loop": "tsx src/modules/08-training-loop-cpu/demo.ts",
         "demo:09-minimal-lm": "tsx src/modules/09-minimal-trainable-language-model/demo.ts",
         "demo:10-text-generation": "tsx src/modules/10-text-generation/demo.ts",
+        "demo:11-sampling": "tsx src/modules/11-sampling-strategies/demo.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "lint": "eslint .",

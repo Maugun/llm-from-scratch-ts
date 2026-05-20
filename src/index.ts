@@ -117,3 +117,20 @@ export type {
     TextGenerationTokenizer,
     TokenGenerationResult,
 } from './modules/10-text-generation/index.js'
+
+export {
+    applyTemperature,
+    filterTopK,
+    generateTextWithSampling,
+    generateTokenIdsWithSampling,
+    sampleFromProbabilities,
+    selectNextToken,
+} from './modules/11-sampling-strategies/index.js'
+export type {
+    SamplingGenerationOptions,
+    SamplingGenerationStep,
+    SamplingSelectionOptions,
+    SamplingStrategy,
+    SamplingTextGenerationResult,
+    SamplingTokenGenerationResult,
+} from './modules/11-sampling-strategies/index.js'

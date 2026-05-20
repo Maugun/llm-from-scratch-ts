@@ -63,6 +63,7 @@ npm run demo:07-positional-encoding
 npm run demo:08-training-loop
 npm run demo:09-minimal-lm
 npm run demo:10-text-generation
+npm run demo:11-sampling
 ```
 
 `npm test` accepte temporairement l'absence de tests. Les tests réels seront ajoutés avec
@@ -87,6 +88,7 @@ src/
     08-training-loop-cpu/
     09-minimal-trainable-language-model/
     10-text-generation/
+    11-sampling-strategies/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
@@ -98,6 +100,7 @@ test/
   08-training-loop-cpu/
   09-minimal-trainable-language-model/
   10-text-generation/
+  11-sampling-strategies/
 data/
   tiny-corpus.txt
 ```
