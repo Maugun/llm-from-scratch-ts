@@ -12,9 +12,10 @@ export const moduleRoadmap = [
     '09-minimal-trainable-language-model',
     '10-text-generation',
     '11-sampling-strategies',
-    '12-tensorflowjs-autograd',
-    '13-memory-performance-vram',
-    '14-mini-end-to-end-pipeline',
+    '12-tensorflow-autograd',
+    '13-tensorflow-next-token-model',
+    '14-trainable-mini-transformer',
+    '15-memory-performance-vram',
 ] as const
 
 export { createCharacterTokenizer } from './modules/01-tokenizer-simple/index.js'
@@ -134,3 +135,19 @@ export type {
     SamplingTextGenerationResult,
     SamplingTokenGenerationResult,
 } from './modules/11-sampling-strategies/index.js'
+
+export {
+    createScalarRegressionModel,
+    disposeScalarRegressionModel,
+    meanSquaredError,
+    predict,
+    trainScalarRegressionModel,
+} from './modules/12-tensorflow-autograd/index.js'
+export type {
+    ScalarRegressionExample,
+    ScalarRegressionModel,
+    ScalarRegressionOptions,
+    TensorEpochMetrics,
+    TensorTrainingHistory,
+    TensorTrainingOptions,
+} from './modules/12-tensorflow-autograd/index.js'

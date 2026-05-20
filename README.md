@@ -29,8 +29,9 @@ Ce projet ne vise pas la performance ni un usage production.
 10. Text generation
 11. Sampling strategies
 12. TensorFlow.js / autograd
-13. Mémoire, performance et VRAM
-14. Mini pipeline end-to-end
+13. Modèle next-token TensorFlow.js
+14. Mini Transformer entraînable
+15. Mémoire, performance et VRAM
 
 ## Prérequis
 
@@ -64,6 +65,7 @@ npm run demo:08-training-loop
 npm run demo:09-minimal-lm
 npm run demo:10-text-generation
 npm run demo:11-sampling
+npm run demo:12-tfjs-autograd
 ```
 
 `npm test` accepte temporairement l'absence de tests. Les tests réels seront ajoutés avec
@@ -89,6 +91,7 @@ src/
     09-minimal-trainable-language-model/
     10-text-generation/
     11-sampling-strategies/
+    12-tensorflow-autograd/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
@@ -101,6 +104,7 @@ test/
   09-minimal-trainable-language-model/
   10-text-generation/
   11-sampling-strategies/
+  12-tensorflow-autograd/
 data/
   tiny-corpus.txt
 ```

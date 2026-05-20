@@ -22,6 +22,7 @@
         "demo:09-minimal-lm": "tsx src/modules/09-minimal-trainable-language-model/demo.ts",
         "demo:10-text-generation": "tsx src/modules/10-text-generation/demo.ts",
         "demo:11-sampling": "tsx src/modules/11-sampling-strategies/demo.ts",
+        "demo:12-tfjs-autograd": "tsx src/modules/12-tensorflow-autograd/demo.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "lint": "eslint .",
@@ -41,5 +42,8 @@
         "typescript": "^6.0.2",
         "typescript-eslint": "^8.58.0",
         "vitest": "^4.0.15"
+    },
+    "dependencies": {
+        "@tensorflow/tfjs": "^4.22.0"
     }
 }
