@@ -23,6 +23,7 @@
         "demo:10-text-generation": "tsx src/modules/10-text-generation/demo.ts",
         "demo:11-sampling": "tsx src/modules/11-sampling-strategies/demo.ts",
         "demo:12-tfjs-autograd": "tsx src/modules/12-tensorflow-autograd/demo.ts",
+        "demo:13-tfjs-next-token": "tsx src/modules/13-tfjs-next-token-model/demo.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "lint": "eslint .",

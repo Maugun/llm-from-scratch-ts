@@ -66,6 +66,7 @@ npm run demo:09-minimal-lm
 npm run demo:10-text-generation
 npm run demo:11-sampling
 npm run demo:12-tfjs-autograd
+npm run demo:13-tfjs-next-token
 ```
 
 `npm test` accepte temporairement l'absence de tests. Les tests réels seront ajoutés avec
@@ -92,6 +93,7 @@ src/
     10-text-generation/
     11-sampling-strategies/
     12-tensorflow-autograd/
+    13-tfjs-next-token-model/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
@@ -105,6 +107,7 @@ test/
   10-text-generation/
   11-sampling-strategies/
   12-tensorflow-autograd/
+  13-tfjs-next-token-model/
 data/
   tiny-corpus.txt
 ```

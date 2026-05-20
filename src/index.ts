@@ -13,7 +13,7 @@ export const moduleRoadmap = [
     '10-text-generation',
     '11-sampling-strategies',
     '12-tensorflow-autograd',
-    '13-tensorflow-next-token-model',
+    '13-tfjs-next-token-model',
     '14-trainable-mini-transformer',
     '15-memory-performance-vram',
 ] as const
@@ -151,3 +151,20 @@ export type {
     TensorTrainingHistory,
     TensorTrainingOptions,
 } from './modules/12-tensorflow-autograd/index.js'
+
+export {
+    computeTfjsNextTokenAverageLoss,
+    createTfjsNextTokenModel,
+    disposeTfjsNextTokenModel,
+    predictMostLikelyNextToken as predictMostLikelyTfjsNextToken,
+    predictNextTokenLogits,
+    predictNextTokenProbabilities as predictTfjsNextTokenProbabilities,
+    trainTfjsNextTokenModel,
+} from './modules/13-tfjs-next-token-model/index.js'
+export type {
+    TfjsNextTokenEpochMetrics,
+    TfjsNextTokenModel,
+    TfjsNextTokenModelOptions,
+    TfjsNextTokenTrainingHistory,
+    TfjsNextTokenTrainingOptions,
+} from './modules/13-tfjs-next-token-model/index.js'
