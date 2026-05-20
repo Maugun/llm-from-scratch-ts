@@ -72,12 +72,16 @@ compatible. L’imposer dans `package.json` casserait l’installation pour beau
 Pour tester ce module dans WSL ou Linux, installe le backend GPU localement:
 
 ```bash
-npm install @tensorflow/tfjs-node-gpu@4.22.0 --no-save
+npm run gpu:install
 ```
 
-L’option `--no-save` évite d’ajouter cette dépendance au `package.json`. Le module charge le package
-dynamiquement: s’il n’est pas installé, la démo affiche un diagnostic pédagogique au lieu de faire
-échouer tout le projet.
+Le script exécute `npm install @tensorflow/tfjs-node-gpu@4.22.0 --no-save`. L’option `--no-save`
+évite d’ajouter cette dépendance au `package.json`. Le module charge le package dynamiquement: s’il
+n’est pas installé, la démo affiche un diagnostic pédagogique au lieu de faire échouer tout le
+projet.
+
+Si `node_modules` est nettoyé, supprimé ou réinstallé depuis Windows, cette installation locale peut
+disparaître. Dans ce cas, relance simplement `npm run gpu:install` depuis WSL/Linux.
 
 ### Note sécurité sur `npm audit`
 
@@ -206,7 +210,7 @@ if (!backend.available) {
 Pour lancer la démo:
 
 ```bash
-npm run demo:16-tfjs-node-gpu
+npm run gpu:demo
 ```
 
 Si `@tensorflow/tfjs-node-gpu` n’est pas installé ou ne charge pas, la démo affiche un diagnostic

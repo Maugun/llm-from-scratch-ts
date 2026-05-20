@@ -29,6 +29,8 @@
         "demo:16-tfjs-node-gpu": "tsx src/modules/16-tfjs-node-gpu-backend/demo.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
+        "gpu:demo": "npm run demo:16-tfjs-node-gpu",
+        "gpu:install": "npm install @tensorflow/tfjs-node-gpu@4.22.0 --no-save",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "test": "vitest run --passWithNoTests",

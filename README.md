@@ -56,11 +56,12 @@ défaut, car il dépend de CUDA/Linux et ne convient pas à toutes les machines.
 installe-le uniquement dans un environnement compatible, depuis WSL ou Linux:
 
 ```bash
-npm install @tensorflow/tfjs-node-gpu@4.22.0 --no-save
+npm run gpu:install
 ```
 
 Cette commande installe le backend GPU localement sans l’ajouter aux dépendances versionnées du
-projet.
+projet. Si `node_modules` est nettoyé ou réinstallé côté Windows, il faudra relancer cette commande
+côté WSL/Linux avant d’utiliser le backend GPU.
 
 ## Scripts
 
@@ -86,6 +87,8 @@ npm run demo:13-tfjs-next-token
 npm run demo:14-mini-transformer
 npm run demo:15-model-sizing
 npm run demo:16-tfjs-node-gpu
+npm run gpu:install
+npm run gpu:demo
 ```
 
 `npm test` accepte temporairement l'absence de tests. Les tests réels seront ajoutés avec
