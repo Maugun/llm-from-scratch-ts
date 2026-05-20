@@ -104,3 +104,16 @@ export type {
     MinimalLanguageModelOptions,
     MinimalLanguageModelTrainingHistory,
 } from './modules/09-minimal-trainable-language-model/index.js'
+
+export {
+    generateText,
+    generateTokenIds,
+    getGenerationContext,
+} from './modules/10-text-generation/index.js'
+export type {
+    GenerationStep,
+    TextGenerationOptions,
+    TextGenerationResult,
+    TextGenerationTokenizer,
+    TokenGenerationResult,
+} from './modules/10-text-generation/index.js'
