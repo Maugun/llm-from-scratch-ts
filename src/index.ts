@@ -15,7 +15,10 @@ export const moduleRoadmap = [
     '12-tensorflow-autograd',
     '13-tfjs-next-token-model',
     '14-trainable-mini-transformer',
-    '15-memory-performance-vram',
+    '15-model-sizing-memory-estimator',
+    '16-tfjs-node-backend',
+    '17-long-corpus-pipeline',
+    '18-small-real-model-training',
 ] as const
 
 export { createCharacterTokenizer } from './modules/01-tokenizer-simple/index.js'
@@ -168,3 +171,26 @@ export type {
     TfjsNextTokenTrainingHistory,
     TfjsNextTokenTrainingOptions,
 } from './modules/13-tfjs-next-token-model/index.js'
+
+export {
+    computeMiniTransformerAverageLoss,
+    createTrainableMiniTransformer,
+    disposeTrainableMiniTransformer,
+    generateMiniTransformerText,
+    generateMiniTransformerTokenIds,
+    predictMiniTransformerLogits,
+    predictMiniTransformerNextToken,
+    predictMiniTransformerProbabilities,
+    trainMiniTransformer,
+} from './modules/14-trainable-mini-transformer/index.js'
+export type {
+    MiniTransformerGenerationOptions,
+    MiniTransformerGenerationStep,
+    MiniTransformerTextGenerationResult,
+    MiniTransformerTextGenerationTokenizer,
+    MiniTransformerTokenGenerationResult,
+    MiniTransformerTrainingHistory,
+    MiniTransformerTrainingOptions,
+    TrainableMiniTransformer,
+    TrainableMiniTransformerOptions,
+} from './modules/14-trainable-mini-transformer/index.js'

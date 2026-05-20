@@ -30,8 +30,11 @@ Ce projet ne vise pas la performance ni un usage production.
 11. Sampling strategies
 12. TensorFlow.js / autograd
 13. Modèle next-token TensorFlow.js
-14. Mini Transformer entraînable
-15. Mémoire, performance et VRAM
+14. Mini Transformer entraînable + génération greedy
+15. Estimation mémoire et taille de modèle
+16. Backend @tensorflow/tfjs-node
+17. Pipeline long corpus
+18. Entraînement d'un petit vrai modèle
 
 ## Prérequis
 
@@ -67,6 +70,7 @@ npm run demo:10-text-generation
 npm run demo:11-sampling
 npm run demo:12-tfjs-autograd
 npm run demo:13-tfjs-next-token
+npm run demo:14-mini-transformer
 ```
 
 `npm test` accepte temporairement l'absence de tests. Les tests réels seront ajoutés avec
@@ -94,6 +98,7 @@ src/
     11-sampling-strategies/
     12-tensorflow-autograd/
     13-tfjs-next-token-model/
+    14-trainable-mini-transformer/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
@@ -108,6 +113,7 @@ test/
   11-sampling-strategies/
   12-tensorflow-autograd/
   13-tfjs-next-token-model/
+  14-trainable-mini-transformer/
 data/
   tiny-corpus.txt
 ```
