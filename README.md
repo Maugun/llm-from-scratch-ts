@@ -60,6 +60,7 @@ npm run demo:04-embeddings
 npm run demo:05-attention
 npm run demo:06-transformer-block
 npm run demo:07-positional-encoding
+npm run demo:08-training-loop
 ```
 
 `npm test` accepte temporairement l'absence de tests. Les tests réels seront ajoutés avec
@@ -81,6 +82,7 @@ src/
     05-self-attention/
     06-transformer-block/
     07-positional-encoding/
+    08-training-loop-cpu/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
@@ -89,6 +91,7 @@ test/
   05-self-attention/
   06-transformer-block/
   07-positional-encoding/
+  08-training-loop-cpu/
 data/
   tiny-corpus.txt
 ```

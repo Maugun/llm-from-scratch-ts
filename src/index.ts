@@ -72,3 +72,21 @@ export type {
     PositionEmbeddingTable,
     PositionEmbeddingTableOptions,
 } from './modules/07-positional-encoding/index.js'
+
+export {
+    createNextTokenExamples,
+    createTrainableTokenBiasModel,
+    crossEntropyLoss,
+    perplexityFromLoss,
+    softmax as softmaxTrainingLogits,
+    trainNextTokenModel,
+} from './modules/08-training-loop-cpu/index.js'
+export type {
+    NextTokenExample,
+    NextTokenExampleOptions,
+    TrainingEpochMetrics,
+    TrainingHistory,
+    TrainingOptions,
+    TrainableTokenBiasModelOptions,
+    TrainableNextTokenModel,
+} from './modules/08-training-loop-cpu/index.js'
