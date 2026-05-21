@@ -20,8 +20,8 @@ describe('cleanCorpusText', () => {
             keepParagraphs: true,
         })
 
-        expect(result.cleanedText).toBe('Premier paragraphe.\n\nDeuxième paragraphe.')
-        expect(result.after.paragraphCount).toBe(2)
+        expect(result.cleanedText).toBe('Premier paragraphe.\nDeuxième paragraphe.')
+        expect(result.after.lineCount).toBe(2)
     })
 
     it('peut recoller les mots coupés par une césure de fin de ligne', () => {

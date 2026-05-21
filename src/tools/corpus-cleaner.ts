@@ -103,7 +103,7 @@ function normalizeWhitespace(text: string, options: CorpusCleanerOptions): strin
     const withoutArtificialLineBreaks = withParagraphMarkers.replace(/\n+/gu, ' ')
     const withOptionalParagraphs =
         options.keepParagraphs === true
-            ? withoutArtificialLineBreaks.replaceAll(paragraphSeparator, '\n\n')
+            ? withoutArtificialLineBreaks.replaceAll(paragraphSeparator, '\n')
             : withoutArtificialLineBreaks.replaceAll(paragraphSeparator, ' ')
 
     return withOptionalParagraphs
