@@ -86,6 +86,7 @@ export type FinalTinyLlmTrainingOptions = {
     readonly maxValidationBatches?: number
     readonly batchOrder?: FinalTinyLlmTrainingBatchOrder
     readonly shuffleSeed?: number
+    readonly saveBestEpochOnly?: boolean
     readonly onProgress?: (progress: FinalTinyLlmTrainingProgress) => void
 }
 
@@ -113,6 +114,10 @@ export type FinalTinyLlmTrainingHistory = {
     readonly initialValidationPerplexity: number
     readonly finalValidationLoss: number
     readonly finalValidationPerplexity: number
+    readonly bestEpoch: number
+    readonly bestValidationLoss: number
+    readonly bestValidationPerplexity: number
+    readonly restoredBestEpochWeights: boolean
     readonly epochs: readonly FinalTinyLlmEpochMetrics[]
 }
 
@@ -178,6 +183,12 @@ export type FinalTinyLlmCheckpointVariable = {
 
 export type SaveFinalTinyLlmCheckpointMetadata = {
     readonly extra?: Record<string, unknown>
+}
+
+type FinalTinyLlmVariableSnapshot = {
+    readonly name: string
+    readonly shape: readonly number[]
+    readonly values: Float32Array
 }
 
 const defaultSeed = 19
@@ -397,6 +408,10 @@ export function trainFinalTinyLlm(
     })
     const epochMetrics: FinalTinyLlmEpochMetrics[] = []
     const trainingStartedAt = Date.now()
+    let bestEpoch = 0
+    let bestValidationLoss = initialValidation.averageLoss
+    let bestValidationPerplexity = initialValidation.perplexity
+    let bestWeights = options.saveBestEpochOnly === true ? cloneVariableSnapshot(model) : undefined
 
     for (let epoch = 1; epoch <= options.epochs; epoch++) {
         let totalTrainLoss = 0
@@ -449,6 +464,14 @@ export function trainFinalTinyLlm(
             maxBatches: maxValidationBatches,
         })
 
+        if (validation.averageLoss < bestValidationLoss) {
+            bestEpoch = epoch
+            bestValidationLoss = validation.averageLoss
+            bestValidationPerplexity = validation.perplexity
+            bestWeights =
+                options.saveBestEpochOnly === true ? cloneVariableSnapshot(model) : bestWeights
+        }
+
         epochMetrics.push({
             epoch,
             trainLoss,
@@ -459,6 +482,10 @@ export function trainFinalTinyLlm(
         })
     }
 
+    if (options.saveBestEpochOnly === true && bestWeights !== undefined) {
+        restoreVariableSnapshot(model, bestWeights)
+    }
+
     const finalValidation = evaluateFinalTinyLlm(model, pipeline.validationTokenIds, {
         batchSize,
         maxBatches: maxValidationBatches,
@@ -466,10 +493,14 @@ export function trainFinalTinyLlm(
 
     return {
         epochs: epochMetrics,
+        bestEpoch,
+        bestValidationLoss,
+        bestValidationPerplexity,
         finalValidationLoss: finalValidation.averageLoss,
         finalValidationPerplexity: finalValidation.perplexity,
         initialValidationLoss: initialValidation.averageLoss,
         initialValidationPerplexity: initialValidation.perplexity,
+        restoredBestEpochWeights: options.saveBestEpochOnly === true,
     }
 }
 
@@ -967,6 +998,38 @@ function canEncode(tokenizer: BpeTokenizer, text: string): boolean {
 
 function getTrainableVariables(model: FinalTinyLlm): tf.Variable[] {
     return getNamedVariables(model).map((variable) => variable.tensor)
+}
+
+function cloneVariableSnapshot(model: FinalTinyLlm): readonly FinalTinyLlmVariableSnapshot[] {
+    return getNamedVariables(model).map((variable) => ({
+        name: variable.name,
+        shape: variable.tensor.shape,
+        values: new Float32Array(variable.tensor.dataSync()),
+    }))
+}
+
+function restoreVariableSnapshot(
+    model: FinalTinyLlm,
+    snapshots: readonly FinalTinyLlmVariableSnapshot[],
+): void {
+    const variableByName = new Map(
+        getNamedVariables(model).map((variable) => [variable.name, variable.tensor]),
+    )
+
+    for (const snapshot of snapshots) {
+        const variable = variableByName.get(snapshot.name)
+
+        if (variable === undefined) {
+            throw new Error(`Snapshot invalide: variable inconnue ${snapshot.name}.`)
+        }
+
+        assertShape(variable.shape, snapshot.shape)
+
+        const tensor = tf.tensor(snapshot.values, [...snapshot.shape], 'float32')
+
+        variable.assign(tensor)
+        tensor.dispose()
+    }
 }
 
 function getNamedVariables(

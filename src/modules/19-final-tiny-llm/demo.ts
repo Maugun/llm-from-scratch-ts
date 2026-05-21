@@ -49,6 +49,8 @@ type FinalTinyLlmDemoConfig = {
     readonly learningRate: number
     readonly maxTrainBatchesPerEpoch: number
     readonly maxValidationBatches: number
+    readonly saveBestEpochOnly: boolean
+    readonly skipCheckpointWhenNoImprovement: boolean
     readonly validationRatio: number
     readonly batchOrder: 'sequential' | 'shuffled'
     readonly shuffleSeed: number
@@ -184,6 +186,10 @@ function printConfigSummary(): void {
     console.info(
         `  mémoire paramètres estimée: ${formatBytes(parameterEstimate.memory.parameterBytes)}`,
     )
+    console.info(`  saveBestEpochOnly: ${String(config.saveBestEpochOnly)}`)
+    console.info(
+        `  skipCheckpointWhenNoImprovement: ${String(config.skipCheckpointWhenNoImprovement)}`,
+    )
     console.info(`  checkpointPath: ${config.checkpointPath}`)
     console.info(`  version à charger: ${checkpointPlan.loadVersion?.versionName ?? 'aucune'}`)
     console.info(`  version à sauvegarder si entraînement: ${checkpointSaveVersion.versionName}`)
@@ -285,6 +291,7 @@ async function trainAndSave(result: ModelLoadResult): Promise<void> {
         maxTrainBatchesPerEpoch: config.maxTrainBatchesPerEpoch,
         maxValidationBatches: config.maxValidationBatches,
         onProgress: createTrainingProgressReporter(),
+        saveBestEpochOnly: config.saveBestEpochOnly,
         shuffleSeed: config.shuffleSeed + checkpointSaveVersion.versionNumber * 10_000,
     })
     const durationMs = Date.now() - startedAt
@@ -307,6 +314,35 @@ async function trainAndSave(result: ModelLoadResult): Promise<void> {
             4,
         )}, perplexité ${history.finalValidationPerplexity.toFixed(2)}`,
     )
+    console.info(
+        `Meilleur point du run: ${
+            history.bestEpoch === 0 ? 'avant entraînement' : `epoch ${String(history.bestEpoch)}`
+        } | validation loss ${history.bestValidationLoss.toFixed(
+            4,
+        )} | perplexité ${history.bestValidationPerplexity.toFixed(2)}`,
+    )
+
+    if (history.restoredBestEpochWeights) {
+        console.info('Checkpoint: les poids sauvegardés correspondent au meilleur point du run.')
+    }
+
+    if (
+        config.skipCheckpointWhenNoImprovement &&
+        history.bestValidationLoss >= history.initialValidationLoss
+    ) {
+        console.info('')
+        console.info('Checkpoint non sauvegardé:')
+        console.info(
+            `  aucune epoch n’a amélioré la validation initiale (${history.initialValidationLoss.toFixed(
+                4,
+            )}).`,
+        )
+        console.info(
+            '  Les poids en mémoire ont été restaurés au meilleur point du run, mais aucune nouvelle version inutile n’a été écrite.',
+        )
+
+        return
+    }
 
     const metadata = await saveFinalTinyLlmCheckpoint(
         result.model,
@@ -509,6 +545,8 @@ function createFallbackDefaults(): FinalTinyLlmDemoConfig {
         maxTrainBatchesPerEpoch: 10,
         maxValidationBatches: 2,
         prompt: 'bonjour le',
+        saveBestEpochOnly: false,
+        skipCheckpointWhenNoImprovement: false,
         seed: 19,
         shuffleSeed: 19,
         strategy: 'topK',
@@ -538,6 +576,8 @@ function createPrivateCorpusDefaults(): FinalTinyLlmDemoConfig {
         maxTrainBatchesPerEpoch: 100,
         maxValidationBatches: 10,
         prompt: 'Utilisateur: Bonjour\nAssistant:',
+        saveBestEpochOnly: false,
+        skipCheckpointWhenNoImprovement: false,
         seed: 19,
         shuffleSeed: 19,
         strategy: 'topK',
@@ -579,8 +619,13 @@ function normalizeConfig(rawConfig: Record<string, unknown>): FinalTinyLlmDemoCo
             'maxValidationBatches',
         ),
         prompt: readString(rawConfig.prompt, 'prompt'),
+        saveBestEpochOnly: readOptionalBoolean(rawConfig.saveBestEpochOnly, 'saveBestEpochOnly'),
         seed: readPositiveInteger(rawConfig.seed, 'seed'),
         shuffleSeed: readPositiveInteger(rawConfig.shuffleSeed, 'shuffleSeed'),
+        skipCheckpointWhenNoImprovement: readOptionalBoolean(
+            rawConfig.skipCheckpointWhenNoImprovement,
+            'skipCheckpointWhenNoImprovement',
+        ),
         strategy: readStrategy(rawConfig.strategy),
         temperature: readPositiveNumber(rawConfig.temperature, 'temperature'),
         topK: readPositiveInteger(rawConfig.topK, 'topK'),
@@ -818,6 +863,18 @@ function readPositiveInteger(value: unknown, name: string): number {
 function readPositiveNumber(value: unknown, name: string): number {
     if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
         throw new Error(`${name} doit être un nombre fini strictement positif.`)
+    }
+
+    return value
+}
+
+function readOptionalBoolean(value: unknown, name: string): boolean {
+    if (value === undefined) {
+        return false
+    }
+
+    if (typeof value !== 'boolean') {
+        throw new Error(`${name} doit être un booléen.`)
     }
 
     return value

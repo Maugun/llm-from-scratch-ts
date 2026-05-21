@@ -113,32 +113,34 @@ Trois exemples sont fournis:
 
 Champs principaux:
 
-| Champ                      | Type / valeurs                               | Rôle                                                                               | Impact principal                                                                |
-| -------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `corpusPath`               | chemin `.txt`                                | Fichier local utilisé pour entraîner le tokenizer BPE et le modèle.                | Change totalement le vocabulaire et les motifs appris.                          |
-| `checkpointPath`           | chemin dossier                               | Dossier racine où créer `v1`, `v2`, etc.                                           | Permet de garder plusieurs versions du modèle.                                  |
-| `checkpointVersion`        | optionnel, `"v1"`, `"v2"`...                 | Version précise à charger. Si absent, la dernière version disponible est utilisée. | Utile pour comparer ou continuer depuis une ancienne version.                   |
-| `bpeVocabularySize`        | entier positif                               | Taille cible du vocabulaire BPE.                                                   | Plus grand = moins de tokens par texte, mais sortie vocabulaire plus coûteuse.  |
-| `bpeMaxTrainingCharacters` | entier positif                               | Portion du corpus utilisée pour apprendre les merges BPE.                          | Plus grand = tokenizer plus représentatif, mais entraînement BPE plus long.     |
-| `contextLength`            | entier positif                               | Nombre de tokens BPE vus pour prédire le suivant.                                  | Coût attention en `contextLength x contextLength`.                              |
-| `batchSize`                | entier positif                               | Nombre d’exemples entraînés ensemble.                                              | Plus grand = plus stable, mais plus de RAM/VRAM.                                |
-| `embeddingDimension`       | entier positif                               | Taille des vecteurs internes.                                                      | Augmente fortement paramètres et activations.                                   |
-| `headCount`                | entier positif divisant `embeddingDimension` | Nombre de têtes d’attention.                                                       | Plusieurs vues du contexte, coût proche mais organisation différente.           |
-| `layerCount`               | entier positif                               | Nombre de blocs Transformer.                                                       | Plus de capacité, mais entraînement plus lent et plus gourmand.                 |
-| `feedForwardDimension`     | entier positif                               | Taille cachée du feed-forward.                                                     | Souvent environ `embeddingDimension * 4`.                                       |
-| `epochs`                   | entier positif                               | Nombre de passages sur les batches sélectionnés.                                   | Plus élevé = plus d’apprentissage, mais risque de surapprentissage.             |
-| `learningRate`             | nombre positif                               | Taille des corrections Adam.                                                       | Trop haut peut dégrader la loss; trop bas apprend lentement.                    |
-| `maxTrainBatchesPerEpoch`  | entier positif                               | Nombre maximum de batches entraînés par epoch.                                     | Contrôle le temps; une epoch peut être volontairement partielle.                |
-| `maxValidationBatches`     | entier positif                               | Nombre de batches utilisés pour estimer la validation.                             | Plus grand = mesure plus fiable, mais plus lente.                               |
-| `validationRatio`          | nombre `>= 0` et `< 1`                       | Part du corpus gardée pour validation.                                             | Sert à détecter si le modèle mémorise sans généraliser.                         |
-| `batchOrder`               | `"shuffled"` ou `"sequential"`               | Ordre de lecture des batches.                                                      | `shuffled` explore différentes zones; `sequential` suit le corpus dans l’ordre. |
-| `shuffleSeed`              | entier positif                               | Seed du shuffle.                                                                   | Rend l’ordre pseudo-aléatoire reproductible.                                    |
-| `maxNewTokens`             | entier positif                               | Nombre de tokens générés après le prompt.                                          | Plus grand = génération plus longue.                                            |
-| `strategy`                 | `"greedy"`, `"temperature"`, `"topK"`        | Stratégie de sélection du prochain token.                                          | Change la variété de la génération, pas les poids du modèle.                    |
-| `temperature`              | nombre positif                               | Aplatissement ou concentration des probabilités.                                   | Bas = plus prudent; haut = plus varié.                                          |
-| `topK`                     | entier positif                               | Nombre de candidats gardés en stratégie `topK`.                                    | Limite les choix aux tokens les plus probables.                                 |
-| `seed`                     | entier positif                               | Seed du sampling.                                                                  | Rend les générations probabilistes reproductibles.                              |
-| `prompt`                   | chaîne                                       | Prompt par défaut utilisé par la démo.                                             | Doit utiliser des caractères connus du tokenizer.                               |
+| Champ                             | Type / valeurs                               | Rôle                                                                                            | Impact principal                                                                |
+| --------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `corpusPath`                      | chemin `.txt`                                | Fichier local utilisé pour entraîner le tokenizer BPE et le modèle.                             | Change totalement le vocabulaire et les motifs appris.                          |
+| `checkpointPath`                  | chemin dossier                               | Dossier racine où créer `v1`, `v2`, etc.                                                        | Permet de garder plusieurs versions du modèle.                                  |
+| `checkpointVersion`               | optionnel, `"v1"`, `"v2"`...                 | Version précise à charger. Si absent, la dernière version disponible est utilisée.              | Utile pour comparer ou continuer depuis une ancienne version.                   |
+| `bpeVocabularySize`               | entier positif                               | Taille cible du vocabulaire BPE.                                                                | Plus grand = moins de tokens par texte, mais sortie vocabulaire plus coûteuse.  |
+| `bpeMaxTrainingCharacters`        | entier positif                               | Portion du corpus utilisée pour apprendre les merges BPE.                                       | Plus grand = tokenizer plus représentatif, mais entraînement BPE plus long.     |
+| `contextLength`                   | entier positif                               | Nombre de tokens BPE vus pour prédire le suivant.                                               | Coût attention en `contextLength x contextLength`.                              |
+| `batchSize`                       | entier positif                               | Nombre d’exemples entraînés ensemble.                                                           | Plus grand = plus stable, mais plus de RAM/VRAM.                                |
+| `embeddingDimension`              | entier positif                               | Taille des vecteurs internes.                                                                   | Augmente fortement paramètres et activations.                                   |
+| `headCount`                       | entier positif divisant `embeddingDimension` | Nombre de têtes d’attention.                                                                    | Plusieurs vues du contexte, coût proche mais organisation différente.           |
+| `layerCount`                      | entier positif                               | Nombre de blocs Transformer.                                                                    | Plus de capacité, mais entraînement plus lent et plus gourmand.                 |
+| `feedForwardDimension`            | entier positif                               | Taille cachée du feed-forward.                                                                  | Souvent environ `embeddingDimension * 4`.                                       |
+| `epochs`                          | entier positif                               | Nombre de passages sur les batches sélectionnés.                                                | Plus élevé = plus d’apprentissage, mais risque de surapprentissage.             |
+| `learningRate`                    | nombre positif                               | Taille des corrections Adam.                                                                    | Trop haut peut dégrader la loss; trop bas apprend lentement.                    |
+| `maxTrainBatchesPerEpoch`         | entier positif                               | Nombre maximum de batches entraînés par epoch.                                                  | Contrôle le temps; une epoch peut être volontairement partielle.                |
+| `maxValidationBatches`            | entier positif                               | Nombre de batches utilisés pour estimer la validation.                                          | Plus grand = mesure plus fiable, mais plus lente.                               |
+| `saveBestEpochOnly`               | booléen optionnel, défaut `false`            | Si `true`, restaure les meilleurs poids du run avant de sauvegarder le checkpoint.              | Évite de sauvegarder une dernière epoch moins bonne que la meilleure epoch.     |
+| `skipCheckpointWhenNoImprovement` | booléen optionnel, défaut `false`            | Si `true`, ne sauvegarde pas de nouvelle version si aucune epoch ne bat la validation initiale. | Évite d’empiler des checkpoints qui n’améliorent pas le modèle.                 |
+| `validationRatio`                 | nombre `>= 0` et `< 1`                       | Part du corpus gardée pour validation.                                                          | Sert à détecter si le modèle mémorise sans généraliser.                         |
+| `batchOrder`                      | `"shuffled"` ou `"sequential"`               | Ordre de lecture des batches.                                                                   | `shuffled` explore différentes zones; `sequential` suit le corpus dans l’ordre. |
+| `shuffleSeed`                     | entier positif                               | Seed du shuffle.                                                                                | Rend l’ordre pseudo-aléatoire reproductible.                                    |
+| `maxNewTokens`                    | entier positif                               | Nombre de tokens générés après le prompt.                                                       | Plus grand = génération plus longue.                                            |
+| `strategy`                        | `"greedy"`, `"temperature"`, `"topK"`        | Stratégie de sélection du prochain token.                                                       | Change la variété de la génération, pas les poids du modèle.                    |
+| `temperature`                     | nombre positif                               | Aplatissement ou concentration des probabilités.                                                | Bas = plus prudent; haut = plus varié.                                          |
+| `topK`                            | entier positif                               | Nombre de candidats gardés en stratégie `topK`.                                                 | Limite les choix aux tokens les plus probables.                                 |
+| `seed`                            | entier positif                               | Seed du sampling.                                                                               | Rend les générations probabilistes reproductibles.                              |
+| `prompt`                          | chaîne                                       | Prompt par défaut utilisé par la démo.                                                          | Doit utiliser des caractères connus du tokenizer.                               |
 
 ## Checkpoints versionnés
 
@@ -161,6 +163,15 @@ Si aucune version n’est demandée, la CLI recharge la dernière version dispon
 `llm:train`, elle continue automatiquement l’entraînement depuis cette version et sauvegarde dans
 la prochaine version libre. `--force-train` permet de repartir de zéro sans écraser les anciennes
 versions.
+
+Avec `saveBestEpochOnly: true`, la commande évalue la validation loss après chaque epoch. Si une
+epoch intermédiaire est meilleure que la dernière, les poids de cette meilleure epoch sont restaurés
+juste avant la sauvegarde. Si aucune epoch ne bat le point de départ, les poids initiaux du run sont
+restaurés: cela évite d’écraser une bonne version par un entraînement qui dégrade la validation.
+
+Avec `skipCheckpointWhenNoImprovement: true`, aucune nouvelle version n’est écrite si la meilleure
+validation loss du run ne fait pas mieux que la validation loss initiale. C’est pratique pour les
+longs entraînements itératifs: une tentative ratée ne crée pas de checkpoint inutile.
 
 ## Limites
 

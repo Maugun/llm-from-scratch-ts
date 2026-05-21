@@ -13,6 +13,8 @@
     "learningRate": 0.0005,
     "maxTrainBatchesPerEpoch": 100,
     "maxValidationBatches": 10,
+    "saveBestEpochOnly": true,
+    "skipCheckpointWhenNoImprovement": true,
     "validationRatio": 0.05,
     "batchOrder": "shuffled",
     "shuffleSeed": 19,

@@ -1,6 +1,8 @@
 import { mkdir, mkdtemp, rm } from 'node:fs/promises'
+import { execFile } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { promisify } from 'node:util'
 
 import * as tf from '@tensorflow/tfjs'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -25,6 +27,8 @@ import {
     type FinalTinyLlm,
 } from '../../src/modules/19-final-tiny-llm/index.js'
 import { resolveCheckpointVersionPlan } from '../../src/modules/18-small-real-model-training/index.js'
+
+const execFileAsync = promisify(execFile)
 
 let temporaryDirectory: string
 
@@ -188,6 +192,33 @@ describe('évaluation, entraînement et génération', () => {
         }
     })
 
+    it('restaure les meilleurs poids du run quand saveBestEpochOnly est actif', () => {
+        const rawText = 'abababababababababababababababababababab'
+        const tokenizer = trainBpeTokenizer(rawText, { vocabularySize: 2 })
+        const pipeline = createLongCorpusPipeline(rawText, tokenizer, {
+            batchSize: 4,
+            contextLength: 3,
+            validationRatio: 0.2,
+        })
+        const model = createTinyModel(2)
+
+        try {
+            const history = trainFinalTinyLlm(model, pipeline, {
+                batchSize: 4,
+                epochs: 3,
+                learningRate: 0.02,
+                maxTrainBatchesPerEpoch: 4,
+                maxValidationBatches: 2,
+                saveBestEpochOnly: true,
+            })
+
+            expect(history.restoredBestEpochWeights).toBe(true)
+            expect(history.finalValidationLoss).toBeCloseTo(history.bestValidationLoss, 5)
+        } finally {
+            disposeFinalTinyLlm(model)
+        }
+    })
+
     it('génère un texte qui commence par le prompt', () => {
         const tokenizer = trainBpeTokenizer('abcdeabcde', { vocabularySize: 5 })
         const model = createTinyModel(5)
@@ -309,6 +340,51 @@ describe('checkpoint final', () => {
     })
 })
 
+describe('CLI/config module 19', () => {
+    it('accepte une config qui omet les booléens optionnels', async () => {
+        const configPath = join(temporaryDirectory, 'config.json')
+
+        await saveJson(configPath, {
+            batchOrder: 'shuffled',
+            batchSize: 4,
+            bpeMaxTrainingCharacters: 1000,
+            bpeVocabularySize: 32,
+            checkpointPath: join(temporaryDirectory, 'checkpoints'),
+            contextLength: 3,
+            corpusPath: join(process.cwd(), 'data', 'tiny-corpus.txt'),
+            embeddingDimension: 8,
+            epochs: 1,
+            feedForwardDimension: 16,
+            headCount: 4,
+            layerCount: 1,
+            learningRate: 0.001,
+            maxNewTokens: 2,
+            maxTrainBatchesPerEpoch: 1,
+            maxValidationBatches: 1,
+            prompt: 'bonjour',
+            seed: 19,
+            shuffleSeed: 19,
+            strategy: 'greedy',
+            temperature: 1,
+            topK: 2,
+            validationRatio: 0.4,
+        })
+
+        const result = await execFileAsync('node', [
+            '--import',
+            'tsx',
+            'src/modules/19-final-tiny-llm/demo.ts',
+            '--mode',
+            'generate',
+            '--config',
+            configPath,
+        ])
+
+        expect(result.stdout).toContain('saveBestEpochOnly: false')
+        expect(result.stdout).toContain('skipCheckpointWhenNoImprovement: false')
+    })
+})
+
 function createTinyModel(vocabularySize = 5): FinalTinyLlm {
     return createFinalTinyLlm({
         contextLength: 3,
@@ -338,4 +414,10 @@ async function saveMetadataPlaceholder(directoryPath: string): Promise<void> {
     const { writeFile } = await import('node:fs/promises')
 
     await writeFile(join(directoryPath, 'metadata.json'), '{}')
+}
+
+async function saveJson(filePath: string, value: unknown): Promise<void> {
+    const { writeFile } = await import('node:fs/promises')
+
+    await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8')
 }
