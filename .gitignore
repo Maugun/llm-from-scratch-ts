@@ -33,6 +33,7 @@ AGENTS.md
 # Local/private corpora and generated dataset caches
 data/private/
 data/cache/
+data/checkpoints/
 
 # Test and tooling artifacts
 .eslintcache

@@ -1,0 +1,17 @@
+{
+    "corpusPath": "data/private/long-corpus.txt",
+    "checkpointPath": "data/checkpoints/small-real-model",
+    "contextLength": 128,
+    "batchSize": 16,
+    "embeddingDimension": 64,
+    "feedForwardDimension": 256,
+    "layerCount": 1,
+    "epochs": 3,
+    "learningRate": 0.001,
+    "batchOrder": "shuffled",
+    "shuffleSeed": 18,
+    "maxTrainBatchesPerEpoch": 200,
+    "maxValidationBatches": 10,
+    "maxNewTokens": 160,
+    "validationRatio": 0.05
+}

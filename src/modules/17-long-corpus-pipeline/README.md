@@ -84,6 +84,44 @@ data/private/long-corpus.txt
 Le dossier `data/private/` est ignoré par Git. Cela évite de versionner un livre, un dataset privé
 ou un texte protégé par droit d’auteur.
 
+Si ton corpus vient d’un livre/PDF, il peut contenir beaucoup de retours à la ligne artificiels liés
+à la largeur de page. Tu peux préparer une version plus propre avec:
+
+```bash
+npm run corpus:clean -- --path data/private/long-corpus.txt
+```
+
+La sortie par défaut sera:
+
+```text
+data/private/long-corpus.clean.txt
+```
+
+Tu peux ensuite utiliser ce fichier nettoyé dans les modules 17 et 18.
+
+Options disponibles:
+
+| Option               | Rôle                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| `--path <fichier>`   | Chemin du corpus brut à nettoyer. Obligatoire.                                             |
+| `--output <fichier>` | Chemin du fichier nettoyé à écrire. Optionnel.                                             |
+| `--keep-paragraphs`  | Conserve les retours à la ligne comme séparateurs de paragraphes.                          |
+| `--fix-hyphenation`  | Recolle les mots coupés par une césure de fin de ligne, par exemple `ma-\ngie` -> `magie`. |
+
+Sans `--output`, le script ajoute `.clean` avant l’extension:
+
+```text
+texte.txt -> texte.clean.txt
+```
+
+Exemples:
+
+```bash
+npm run corpus:clean -- --path data/private/long-corpus.txt --keep-paragraphs
+npm run corpus:clean -- --path data/private/long-corpus.txt --fix-hyphenation
+npm run corpus:clean -- --path data/private/long-corpus.txt --output data/private/corpus.clean.txt
+```
+
 Si ce fichier n’existe pas, la démo utilise `data/tiny-corpus.txt` pour rester exécutable partout.
 
 ## Cache dataset optionnel

@@ -11,6 +11,7 @@
     },
     "scripts": {
         "build": "tsc -p tsconfig.build.json",
+        "corpus:clean": "tsx src/tools/corpus-cleaner.ts",
         "demo:01-tokenizer": "tsx src/modules/01-tokenizer-simple/demo.ts",
         "demo:02-dataset": "tsx src/modules/02-dataset-loader/demo.ts",
         "demo:03-bigram": "tsx src/modules/03-bigram-model/demo.ts",
@@ -28,6 +29,9 @@
         "demo:15-model-sizing": "tsx src/modules/15-model-sizing-memory-estimator/demo.ts",
         "demo:16-tfjs-node-gpu": "tsx src/modules/16-tfjs-node-gpu-backend/demo.ts",
         "demo:17-long-corpus": "tsx src/modules/17-long-corpus-pipeline/demo.ts",
+        "demo:18-small-real-model": "tsx src/modules/18-small-real-model-training/demo.ts",
+        "demo:18-small-real-model:continue": "npm run demo:18-small-real-model -- --continue-train",
+        "demo:18-small-real-model:train": "npm run demo:18-small-real-model -- --force-train",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "gpu:demo": "npm run demo:16-tfjs-node-gpu",

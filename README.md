@@ -71,6 +71,7 @@ npm run build
 npm run lint
 npm run format:check
 npm test
+npm run corpus:clean -- --path data/private/long-corpus.txt
 npm run demo:01-tokenizer
 npm run demo:02-dataset
 npm run demo:03-bigram
@@ -88,6 +89,9 @@ npm run demo:14-mini-transformer
 npm run demo:15-model-sizing
 npm run demo:16-tfjs-node-gpu
 npm run demo:17-long-corpus
+npm run demo:18-small-real-model
+npm run demo:18-small-real-model:continue
+npm run demo:18-small-real-model:train
 npm run gpu:install
 npm run gpu:demo
 ```
@@ -98,11 +102,34 @@ les modules, quand ils apportent une vérification utile.
 Les scripts `demo:*` lancent de petits exemples exécutables pour manipuler chaque module
 comme dans un cours pratique.
 
+Le script `corpus:clean` prépare un texte extrait d’un livre ou d’un PDF avant entraînement:
+
+```bash
+npm run corpus:clean -- --path data/private/long-corpus.txt
+```
+
+Par défaut, il écrit le résultat à côté du fichier source en ajoutant `.clean` avant l’extension:
+
+```text
+data/private/long-corpus.clean.txt
+```
+
+Il remplace les retours à la ligne simples par des espaces, réduit les espaces multiples et nettoie
+les espaces avant la ponctuation. Options utiles:
+
+```bash
+npm run corpus:clean -- --path data/private/long-corpus.txt --keep-paragraphs
+npm run corpus:clean -- --path data/private/long-corpus.txt --fix-hyphenation
+npm run corpus:clean -- --path data/private/long-corpus.txt --output data/private/corpus.clean.txt
+```
+
 ## Structure
 
 ```text
 src/
   index.ts
+  tools/
+    corpus-cleaner.ts
   modules/
     01-tokenizer-simple/
     02-dataset-loader/
@@ -121,6 +148,7 @@ src/
     15-model-sizing-memory-estimator/
     16-tfjs-node-gpu-backend/
     17-long-corpus-pipeline/
+    18-small-real-model-training/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
@@ -139,10 +167,12 @@ test/
   15-model-sizing-memory-estimator/
   16-tfjs-node-gpu-backend/
   17-long-corpus-pipeline/
+  18-small-real-model-training/
 data/
   tiny-corpus.txt
   private/      # ignoré par Git, pour les corpus locaux
   cache/        # ignoré par Git, pour les datasets préparés localement
+  checkpoints/  # ignoré par Git, pour les modèles sauvegardés localement
 ```
 
 Les modules sont préfixés par numéro pour rendre l'ordre pédagogique visible dans
