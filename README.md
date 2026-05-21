@@ -35,6 +35,7 @@ Ce projet ne vise pas la performance ni un usage production.
 16. Backend GPU @tensorflow/tfjs-node-gpu
 17. Pipeline long corpus
 18. Entraînement d'un petit vrai modèle
+19. Tiny LLM final avec BPE, long corpus et chat playground
 
 ## Prérequis
 
@@ -92,6 +93,10 @@ npm run demo:17-long-corpus
 npm run demo:18-small-real-model
 npm run demo:18-small-real-model:continue
 npm run demo:18-small-real-model:train
+npm run demo:19-final-llm
+npm run llm:train -- --config data/private/final-llm-config.json
+npm run llm:chat -- --config data/private/final-llm-config.json
+npm run llm:generate -- --config data/private/final-llm-config.json --prompt "Utilisateur: Bonjour\nAssistant:"
 npm run gpu:install
 npm run gpu:demo
 ```
@@ -149,6 +154,7 @@ src/
     16-tfjs-node-gpu-backend/
     17-long-corpus-pipeline/
     18-small-real-model-training/
+    19-final-tiny-llm/
 test/
   01-tokenizer-simple/
   02-dataset-loader/
@@ -168,6 +174,7 @@ test/
   16-tfjs-node-gpu-backend/
   17-long-corpus-pipeline/
   18-small-real-model-training/
+  19-final-tiny-llm/
 data/
   tiny-corpus.txt
   private/      # ignoré par Git, pour les corpus locaux

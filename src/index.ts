@@ -19,6 +19,7 @@ export const moduleRoadmap = [
     '16-tfjs-node-gpu-backend',
     '17-long-corpus-pipeline',
     '18-small-real-model-training',
+    '19-final-tiny-llm',
 ] as const
 
 export { createCharacterTokenizer } from './modules/01-tokenizer-simple/index.js'
@@ -284,3 +285,44 @@ export type {
     SmallLanguageModelTrainingOptions,
     SmallLanguageModelTrainingProgress,
 } from './modules/18-small-real-model-training/index.js'
+
+export {
+    chatWithFinalTinyLlm,
+    createFinalTinyLlm,
+    decodeWithBpe,
+    disposeFinalTinyLlm,
+    encodeWithBpe,
+    evaluateFinalTinyLlm,
+    generateFinalTinyLlmText,
+    loadBpeTokenizer,
+    loadFinalTinyLlmCheckpoint,
+    predictFinalTinyLlmNextToken,
+    predictFinalTinyLlmProbabilities,
+    saveBpeTokenizer,
+    saveFinalTinyLlmCheckpoint,
+    trainBpeTokenizer,
+    trainFinalTinyLlm,
+} from './modules/19-final-tiny-llm/index.js'
+export type {
+    BpeMerge,
+    BpeTokenizer,
+    BpeTokenizerTrainingOptions,
+    BpeTokenizerTrainingProgress,
+    FinalTinyLlm,
+    FinalTinyLlmChatMessage,
+    FinalTinyLlmCheckpointMetadata,
+    FinalTinyLlmCheckpointVariable,
+    FinalTinyLlmEpochMetrics,
+    FinalTinyLlmEvaluationMetrics,
+    FinalTinyLlmEvaluationOptions,
+    FinalTinyLlmGenerationOptions,
+    FinalTinyLlmGenerationStep,
+    FinalTinyLlmLayer,
+    FinalTinyLlmOptions,
+    FinalTinyLlmTextGenerationResult,
+    FinalTinyLlmTrainingBatchOrder,
+    FinalTinyLlmTrainingHistory,
+    FinalTinyLlmTrainingOptions,
+    FinalTinyLlmTrainingProgress,
+    SaveFinalTinyLlmCheckpointMetadata,
+} from './modules/19-final-tiny-llm/index.js'
