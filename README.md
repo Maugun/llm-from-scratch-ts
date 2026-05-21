@@ -1,46 +1,28 @@
 # TypeScript LLM
 
-Mini LLM pédagogique en TypeScript pour comprendre progressivement le fonctionnement des
-LLM modernes. Le but principal est l'apprentissage: le code doit rester simple, lisible,
-fortement commenté et vérifiable module par module.
+Projet pédagogique en TypeScript pour comprendre progressivement comment fonctionnent les
+LLM modernes.
 
-Ce projet ne vise pas la performance ni un usage production.
+Le projet part de briques très simples, comme un tokenizer caractère et un modèle bigramme,
+puis avance jusqu’à un petit Transformer entraînable avec TensorFlow.js, tokenizer BPE,
+checkpoints et playground de génération.
 
-## Principes
+Ce projet ne vise pas la production ni les performances maximales. Le but est d’apprendre,
+de manipuler les concepts et de garder le code lisible.
 
-- Avancer un seul module à la fois.
-- Présenter le plan du module courant avant d'écrire son code.
-- Attendre une validation explicite avant de passer au module suivant.
-- Expliquer le rôle théorique, les intuitions mathématiques, les compromis et les limites.
-- Garder une attention explicite sur la mémoire et la VRAM.
-- Éviter les dépendances inutiles.
+## Ce que tu vas apprendre
 
-## Roadmap pédagogique
-
-1. Tokenizer simple
-2. Dataset loader
-3. Bigram model
-4. Embeddings
-5. Self-attention
-6. Transformer block
-7. Positional encoding
-8. Training loop CPU pédagogique
-9. Modèle de langage minimal entraînable
-10. Text generation
-11. Sampling strategies
-12. TensorFlow.js / autograd
-13. Modèle next-token TensorFlow.js
-14. Mini Transformer entraînable + génération greedy
-15. Estimation mémoire et taille de modèle
-16. Backend GPU @tensorflow/tfjs-node-gpu
-17. Pipeline long corpus
-18. Entraînement d'un petit vrai modèle
-19. Tiny LLM final avec BPE, long corpus et chat playground
+- Transformer du texte en tokens numériques.
+- Préparer un corpus et des exemples `contexte -> prochain token`.
+- Comprendre les embeddings, la self-attention, les blocs Transformer et le positional encoding.
+- Observer une boucle d’entraînement, une loss, une perplexité et des gradients.
+- Générer du texte avec greedy decoding, température et top-k.
+- Préparer un corpus long local, entraîner un petit modèle et sauvegarder des checkpoints.
 
 ## Prérequis
 
-- Node.js 20 LTS ou 24 LTS
-- npm 10 ou 11
+- Node.js 20 LTS ou 24 LTS.
+- npm 10 ou 11.
 
 Le fichier `.nvmrc` indique Node 20, car les bindings natifs TensorFlow.js GPU sont plus fiables
 sur une version LTS largement supportée. Node 24 reste utilisable pour les modules sans backend
@@ -52,27 +34,80 @@ natif GPU, mais Node 20 est recommandé pour `@tensorflow/tfjs-node-gpu`.
 npm install
 ```
 
-Le module 16 utilise un backend GPU optionnel. `@tensorflow/tfjs-node-gpu` n’est pas installé par
-défaut, car il dépend de CUDA/Linux et ne convient pas à toutes les machines. Pour ce module,
-installe-le uniquement dans un environnement compatible, depuis WSL ou Linux:
-
-```bash
-npm run gpu:install
-```
-
-Cette commande installe le backend GPU localement sans l’ajouter aux dépendances versionnées du
-projet. Si `node_modules` est nettoyé ou réinstallé côté Windows, il faudra relancer cette commande
-côté WSL/Linux avant d’utiliser le backend GPU.
-
-## Scripts
+Vérifier que le projet est sain:
 
 ```bash
 npm run typecheck
-npm run build
+npm test
 npm run lint
 npm run format:check
+npm run build
+```
+
+## Démarrage rapide
+
+Lancer les premiers modules:
+
+```bash
+npm run demo:01-tokenizer
+npm run demo:02-dataset
+npm run demo:03-bigram
+```
+
+Lancer le mini Transformer pédagogique:
+
+```bash
+npm run demo:14-mini-transformer
+```
+
+Lancer la démo finale courte:
+
+```bash
+npm run demo:19-final-llm
+```
+
+Cette dernière commande utilise une config mini versionnée et le petit corpus `data/tiny-corpus.txt`.
+Elle est faite pour tester le flux complet rapidement, pas pour obtenir un bon modèle.
+
+## Parcours pédagogique
+
+1. `01-tokenizer-simple`: tokenizer caractère.
+2. `02-dataset-loader`: lecture d’un corpus texte et split train/validation.
+3. `03-bigram-model`: probabilités simples `token courant -> token suivant`.
+4. `04-embeddings`: ids de tokens transformés en vecteurs.
+5. `05-self-attention`: self-attention causale CPU.
+6. `06-transformer-block`: bloc Transformer CPU.
+7. `07-positional-encoding`: ajout d’information de position.
+8. `08-training-loop-cpu`: première boucle d’entraînement CPU.
+9. `09-minimal-trainable-language-model`: modèle contextuel entraînable fait main.
+10. `10-text-generation`: génération greedy.
+11. `11-sampling-strategies`: température et top-k.
+12. `12-tensorflow-autograd`: introduction à TensorFlow.js et autograd.
+13. `13-tfjs-next-token-model`: modèle next-token TensorFlow.js.
+14. `14-trainable-mini-transformer`: mini Transformer entraînable.
+15. `15-model-sizing-memory-estimator`: estimation paramètres/mémoire.
+16. `16-tfjs-node-gpu-backend`: backend GPU optionnel.
+17. `17-long-corpus-pipeline`: préparation d’un corpus long privé.
+18. `18-small-real-model-training`: entraînement batché sur corpus long.
+19. `19-final-tiny-llm`: tiny LLM final avec BPE, checkpoints et playground.
+
+Chaque module contient son propre README avec les explications détaillées.
+
+## Commandes utiles
+
+Qualité du projet:
+
+```bash
+npm run typecheck
 npm test
-npm run corpus:clean -- --path data/private/long-corpus.txt
+npm run lint
+npm run format:check
+npm run build
+```
+
+Démos:
+
+```bash
 npm run demo:01-tokenizer
 npm run demo:02-dataset
 npm run demo:03-bigram
@@ -91,42 +126,91 @@ npm run demo:15-model-sizing
 npm run demo:16-tfjs-node-gpu
 npm run demo:17-long-corpus
 npm run demo:18-small-real-model
-npm run demo:18-small-real-model:continue
-npm run demo:18-small-real-model:train
 npm run demo:19-final-llm
+```
+
+Module final:
+
+```bash
 npm run llm:train -- --config data/private/final-llm-config.json
 npm run llm:chat -- --config data/private/final-llm-config.json
 npm run llm:generate -- --config data/private/final-llm-config.json --prompt "Utilisateur: Bonjour\nAssistant:"
-npm run gpu:install
-npm run gpu:demo
 ```
 
-`npm test` accepte temporairement l'absence de tests. Les tests réels seront ajoutés avec
-les modules, quand ils apportent une vérification utile.
-
-Les scripts `demo:*` lancent de petits exemples exécutables pour manipuler chaque module
-comme dans un cours pratique.
-
-Le script `corpus:clean` prépare un texte extrait d’un livre ou d’un PDF avant entraînement:
+`llm:train` continue automatiquement depuis le dernier checkpoint compatible. Pour repartir de
+zéro dans une nouvelle version:
 
 ```bash
-npm run corpus:clean -- --path data/private/long-corpus.txt
+npm run llm:train -- --config data/private/final-llm-config.json --force-train
 ```
 
-Par défaut, il écrit le résultat à côté du fichier source en ajoutant `.clean` avant l’extension:
+## Utiliser un corpus long privé
+
+Les corpus longs ne sont pas versionnés. Place ton fichier local dans `data/private/`.
+
+Exemple:
+
+```text
+data/private/long-corpus.txt
+```
+
+Nettoyer un texte extrait d’un livre ou d’un PDF:
+
+```bash
+npm run corpus:clean -- --path data/private/long-corpus.txt --keep-paragraphs
+```
+
+Par défaut, le résultat est écrit à côté du fichier source avec `.clean` avant l’extension:
 
 ```text
 data/private/long-corpus.clean.txt
 ```
 
-Il remplace les retours à la ligne simples par des espaces, réduit les espaces multiples et nettoie
-les espaces avant la ponctuation. Options utiles:
+Options utiles:
 
 ```bash
-npm run corpus:clean -- --path data/private/long-corpus.txt --keep-paragraphs
 npm run corpus:clean -- --path data/private/long-corpus.txt --fix-hyphenation
 npm run corpus:clean -- --path data/private/long-corpus.txt --output data/private/corpus.clean.txt
 ```
+
+Les dossiers suivants sont ignorés par Git:
+
+```text
+data/private/
+data/cache/
+data/checkpoints/
+```
+
+## Backend GPU optionnel
+
+Le projet fonctionne avec `@tensorflow/tfjs` par défaut.
+
+Le backend `@tensorflow/tfjs-node-gpu` est optionnel, car il dépend de CUDA/Linux et ne convient
+pas à toutes les machines. Il est surtout utile pour les modules avancés et les entraînements plus
+longs.
+
+Dans un environnement compatible, typiquement WSL2/Linux avec CUDA:
+
+```bash
+npm run gpu:install
+npm run demo:16-tfjs-node-gpu
+```
+
+Cette installation se fait avec `--no-save`: le package GPU n’est pas ajouté aux dépendances
+versionnées du projet.
+
+## Configs d’exemple
+
+Le module final fournit plusieurs configs:
+
+```text
+src/modules/19-final-tiny-llm/demo-config.mini.example.json
+src/modules/19-final-tiny-llm/demo-config.example.json
+src/modules/19-final-tiny-llm/demo-config.gpu.example.json
+```
+
+Pour entraîner sur ton corpus privé, copie une config dans `data/private/`, adapte les chemins et
+les dimensions, puis lance `llm:train`.
 
 ## Structure
 
@@ -137,65 +221,24 @@ src/
     corpus-cleaner.ts
   modules/
     01-tokenizer-simple/
-    02-dataset-loader/
-    03-bigram-model/
-    04-embeddings/
-    05-self-attention/
-    06-transformer-block/
-    07-positional-encoding/
-    08-training-loop-cpu/
-    09-minimal-trainable-language-model/
-    10-text-generation/
-    11-sampling-strategies/
-    12-tensorflow-autograd/
-    13-tfjs-next-token-model/
-    14-trainable-mini-transformer/
-    15-model-sizing-memory-estimator/
-    16-tfjs-node-gpu-backend/
-    17-long-corpus-pipeline/
-    18-small-real-model-training/
+    ...
     19-final-tiny-llm/
 test/
   01-tokenizer-simple/
-  02-dataset-loader/
-  03-bigram-model/
-  04-embeddings/
-  05-self-attention/
-  06-transformer-block/
-  07-positional-encoding/
-  08-training-loop-cpu/
-  09-minimal-trainable-language-model/
-  10-text-generation/
-  11-sampling-strategies/
-  12-tensorflow-autograd/
-  13-tfjs-next-token-model/
-  14-trainable-mini-transformer/
-  15-model-sizing-memory-estimator/
-  16-tfjs-node-gpu-backend/
-  17-long-corpus-pipeline/
-  18-small-real-model-training/
+  ...
   19-final-tiny-llm/
 data/
   tiny-corpus.txt
-  private/      # ignoré par Git, pour les corpus locaux
-  cache/        # ignoré par Git, pour les datasets préparés localement
-  checkpoints/  # ignoré par Git, pour les modèles sauvegardés localement
+  private/      # ignoré par Git
+  cache/        # ignoré par Git
+  checkpoints/  # ignoré par Git
 ```
 
-Les modules sont préfixés par numéro pour rendre l'ordre pédagogique visible dans
-l'explorateur de fichiers.
+## Limites
 
-## Workflow pour chaque module
-
-Avant de coder un module, le plan doit couvrir:
-
-1. le but théorique du module;
-2. sa place dans un LLM;
-3. les concepts mathématiques utiles, expliqués simplement;
-4. l'architecture des fichiers;
-5. l'impact mémoire et VRAM;
-6. les compromis;
-7. les tests simples prévus.
-
-Après implémentation, le module doit inclure des explications, des commentaires
-pédagogiques et une vérification locale adaptée.
+- Les modèles entraînés ici sont très petits.
+- Le mode chat n’est pas un assistant fiable.
+- Le projet n’inclut pas d’instruction tuning, de RAG ou de garde-fous de production.
+- Les résultats dépendent fortement du corpus, de la taille du modèle et du temps d’entraînement.
+- Un modèle entraîné sur un seul livre apprend surtout du style et des motifs, pas une compréhension
+  robuste du contenu.

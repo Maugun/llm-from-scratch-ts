@@ -29,6 +29,7 @@ Thumbs.db
 
 # Local agent instructions
 AGENTS.md
+README.ai.md
 
 # Local/private corpora and generated dataset caches
 data/private/
