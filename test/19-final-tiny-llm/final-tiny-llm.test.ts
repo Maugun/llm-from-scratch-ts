@@ -70,6 +70,45 @@ describe('tokenizer BPE pédagogique', () => {
         expect(decodeWithBpe(tokenizer, tokenIds)).toBe('bonjour')
     })
 
+    it('garde les caractères rares du corpus complet même si les merges sont appris sur un extrait', () => {
+        const tokenizer = trainBpeTokenizer('ababababÏ', {
+            maxTrainingCharacters: 8,
+            vocabularySize: 5,
+        })
+
+        expect(tokenizer.vocabulary).toContain('Ï')
+        expect(tokenizer.decode(tokenizer.encode('Ï'))).toBe('Ï')
+    })
+
+    it('ignore les merges trop rares quand minimumMergeCount est configuré', () => {
+        const tokenizer = trainBpeTokenizer('abab', {
+            minimumMergeCount: 3,
+            vocabularySize: 6,
+        })
+
+        expect(tokenizer.merges).toHaveLength(0)
+    })
+
+    it('ignore les merges qui dépassent la longueur maximale configurée', () => {
+        const tokenizer = trainBpeTokenizer('aaaaaaaaaa', {
+            maximumMergedTokenLength: 1,
+            vocabularySize: 3,
+        })
+
+        expect(tokenizer.merges).toHaveLength(0)
+    })
+
+    it('ignore les merges qui contiennent trop de caractères blancs', () => {
+        const tokenizer = trainBpeTokenizer('a b\nc a b\nc a b\nc', {
+            maximumSpacesInMergedToken: 1,
+            vocabularySize: 20,
+        })
+
+        expect(tokenizer.vocabulary.every((token) => (token.match(/\s/gu)?.length ?? 0) <= 1)).toBe(
+            true,
+        )
+    })
+
     it('sauvegarde puis recharge le tokenizer', async () => {
         const tokenizer = trainBpeTokenizer('abababab', { vocabularySize: 4 })
         const filePath = join(temporaryDirectory, 'tokenizer.json')

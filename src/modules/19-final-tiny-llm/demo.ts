@@ -1,5 +1,6 @@
+import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
-import { readdir, readFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { createInterface } from 'node:readline/promises'
 import { stdin as input, stdout as output } from 'node:process'
 import { platform } from 'node:os'
@@ -10,7 +11,13 @@ import {
     estimateMiniTransformerSize,
 } from '../15-model-sizing-memory-estimator/index.js'
 import { loadTfjsNodeGpuBackend } from '../16-tfjs-node-gpu-backend/index.js'
-import { createLongCorpusPipeline, loadLongCorpusText } from '../17-long-corpus-pipeline/index.js'
+import {
+    estimateNextTokenExampleCount,
+    getBatchCount,
+    loadLongCorpusText,
+    type LongCorpusPipeline,
+    type LongCorpusStats,
+} from '../17-long-corpus-pipeline/index.js'
 import {
     loadFinalTinyLlmCheckpoint,
     createFinalTinyLlm,
@@ -21,9 +28,12 @@ import {
     generateFinalTinyLlmText,
     evaluateFinalTinyLlm,
     type BpeTokenizer,
+    type BpeMerge,
     type BpeTokenizerTrainingProgress,
     type FinalTinyLlm,
+    type FinalTinyLlmCheckpointLoadProgress,
     type FinalTinyLlmGenerationOptions,
+    type FinalTinyLlmGenerationStep,
     type FinalTinyLlmTrainingProgress,
 } from './index.js'
 import {
@@ -39,6 +49,9 @@ type FinalTinyLlmDemoConfig = {
     readonly checkpointVersion: string | undefined
     readonly bpeVocabularySize: number
     readonly bpeMaxTrainingCharacters: number
+    readonly bpeMinimumMergeCount: number
+    readonly bpeMaximumMergedTokenLength: number
+    readonly bpeMaximumSpacesInMergedToken: number
     readonly contextLength: number
     readonly batchSize: number
     readonly embeddingDimension: number
@@ -83,10 +96,46 @@ type ModelLoadResult =
           readonly tokenizer: BpeTokenizer
       }
 
+type CorpusEncodingProgress = {
+    readonly currentStep: number
+    readonly totalSteps: number
+    readonly progressRatio: number
+    readonly label: string
+    readonly elapsedMs: number
+}
+
+class PromptTooShortError extends Error {
+    public constructor(
+        public readonly tokenCount: number,
+        public readonly expectedTokenCount: number,
+    ) {
+        super(
+            `Prompt trop court: ${String(tokenCount)} tokens BPE, attendu au moins ${String(
+                expectedTokenCount,
+            )}.`,
+        )
+    }
+}
+
+type TokenizedCorpusCache = {
+    readonly version: 1
+    readonly createdAt: string
+    readonly corpusPath: string
+    readonly corpusByteLength: number
+    readonly corpusHash: string
+    readonly tokenizerHash: string
+    readonly tokenizerVocabularySize: number
+    readonly tokenIds: readonly number[]
+}
+
 const privateDirectoryPath = join(process.cwd(), 'data', 'private')
 const fallbackCorpusPath = join(process.cwd(), 'data', 'tiny-corpus.txt')
 const defaultConfigPath = join(privateDirectoryPath, 'final-llm-config.json')
 const defaultCheckpointPath = join(process.cwd(), 'data', 'checkpoints', 'final-tiny-llm')
+const tokenizedCorpusCacheVersion = 1
+const tokenizedCorpusCacheDirectoryName = 'dataset-cache'
+const tokenizedCorpusCacheFileName = 'tokenized-corpus.json'
+const progressLogIntervalMs = 500
 const cliOptions = parseCliOptions(process.argv.slice(2))
 const localConfig = await loadLocalConfig(cliOptions.configPath)
 const corpusPath = await resolveCorpusPath()
@@ -139,6 +188,7 @@ try {
             modelLoadResult,
             cliOptions.prompt ?? config.prompt,
             createGenerationOptions(),
+            true,
         )
     } else if (cliOptions.mode === 'chat') {
         await startChat(modelLoadResult)
@@ -174,6 +224,11 @@ function printConfigSummary(): void {
     console.info('')
     console.info('Configuration principale:')
     console.info(`  BPE vocabularySize: ${String(config.bpeVocabularySize)}`)
+    console.info(`  BPE minimumMergeCount: ${String(config.bpeMinimumMergeCount)}`)
+    console.info(`  BPE maximumMergedTokenLength: ${String(config.bpeMaximumMergedTokenLength)}`)
+    console.info(
+        `  BPE maximumSpacesInMergedToken: ${String(config.bpeMaximumSpacesInMergedToken)}`,
+    )
     console.info(`  contextLength: ${String(config.contextLength)}`)
     console.info(`  batchSize: ${String(config.batchSize)}`)
     console.info(`  embeddingDimension: ${String(config.embeddingDimension)}`)
@@ -199,11 +254,22 @@ function printConfigSummary(): void {
 async function createOrLoadModelAndTokenizer(): Promise<ModelLoadResult> {
     if (checkpointPlan.loadVersion !== undefined) {
         try {
+            console.info('Chargement du checkpoint existant:')
+            console.info(`  version: ${checkpointPlan.loadVersion.versionName}`)
+            console.info(`  dossier: ${checkpointPlan.loadVersion.directoryPath}`)
+
             const loaded = await loadFinalTinyLlmCheckpoint(
                 checkpointPlan.loadVersion.directoryPath,
+                {
+                    onProgress: createCheckpointLoadProgressReporter(),
+                },
             )
+            finishTrainingProgressLine()
 
             if (isCheckpointCompatible(loaded.model)) {
+                console.info('  statut: chargé et compatible avec la configuration courante.')
+                console.info('')
+
                 return {
                     loadedFromCheckpoint: true,
                     loadedVersion: checkpointPlan.loadVersion,
@@ -214,11 +280,18 @@ async function createOrLoadModelAndTokenizer(): Promise<ModelLoadResult> {
 
             disposeFinalTinyLlm(loaded.model)
             checkpointSaveVersion = checkpointPlan.nextVersion
-            console.info('Checkpoint ignoré: configuration incompatible avec la config courante.')
+            console.info(
+                '  statut: ignoré, configuration incompatible avec la configuration courante.',
+            )
+            console.info('')
         } catch (error) {
+            finishTrainingProgressLine()
             checkpointSaveVersion = checkpointPlan.nextVersion
-            console.info('Checkpoint impossible à charger: nouvel entraînement nécessaire.')
-            console.info(error instanceof Error ? `Raison: ${error.message}` : 'Raison inconnue.')
+            console.info('  statut: impossible à charger, nouvel entraînement nécessaire.')
+            console.info(
+                error instanceof Error ? `  raison: ${error.message}` : '  raison inconnue.',
+            )
+            console.info('')
         }
     }
 
@@ -231,6 +304,9 @@ async function createOrLoadModelAndTokenizer(): Promise<ModelLoadResult> {
     )
     const tokenizer = trainBpeTokenizer(corpus.rawText, {
         maxTrainingCharacters: config.bpeMaxTrainingCharacters,
+        maximumMergedTokenLength: config.bpeMaximumMergedTokenLength,
+        maximumSpacesInMergedToken: config.bpeMaximumSpacesInMergedToken,
+        minimumMergeCount: config.bpeMinimumMergeCount,
         onProgress: createBpeProgressReporter(),
         vocabularySize: config.bpeVocabularySize,
     })
@@ -257,11 +333,22 @@ function shouldTrain(result: ModelLoadResult): boolean {
 }
 
 async function trainAndSave(result: ModelLoadResult): Promise<void> {
-    const pipeline = createLongCorpusPipeline(corpus.rawText, result.tokenizer, {
+    if (result.loadedFromCheckpoint) {
+        console.info(
+            `Entraînement repris depuis ${result.loadedVersion.versionName}; sauvegarde prévue dans ${checkpointSaveVersion.versionName}.`,
+        )
+    } else {
+        console.info(
+            `Nouvel entraînement; sauvegarde prévue dans ${checkpointSaveVersion.versionName}.`,
+        )
+    }
+
+    const pipeline = await createLongCorpusPipelineWithProgress(corpus.rawText, result.tokenizer, {
         batchSize: config.batchSize,
         contextLength: config.contextLength,
         validationRatio: config.validationRatio,
     })
+    finishTrainingProgressLine()
 
     console.info('')
     console.info('Pipeline d’entraînement:')
@@ -365,6 +452,298 @@ async function trainAndSave(result: ModelLoadResult): Promise<void> {
     console.info(`  variables: ${String(metadata.variables.length)}`)
 }
 
+async function createLongCorpusPipelineWithProgress(
+    rawText: string,
+    tokenizer: BpeTokenizer,
+    options: {
+        readonly batchSize: number
+        readonly contextLength: number
+        readonly validationRatio: number
+    },
+): Promise<LongCorpusPipeline> {
+    console.info('Préparation du pipeline d’entraînement:')
+
+    const tokenIds = await loadOrCreateTokenizedCorpusCache(rawText, tokenizer)
+    const validationTokenCount = Math.floor(tokenIds.length * options.validationRatio)
+    const trainTokenCount = tokenIds.length - validationTokenCount
+    const trainTokenIds = tokenIds.slice(0, trainTokenCount)
+    const validationTokenIds = tokenIds.slice(trainTokenCount)
+    const trainExampleCount = estimateNextTokenExampleCount(
+        trainTokenIds.length,
+        options.contextLength,
+    )
+    const validationExampleCount = estimateNextTokenExampleCount(
+        validationTokenIds.length,
+        options.contextLength,
+    )
+
+    return {
+        batchSize: options.batchSize,
+        contextLength: options.contextLength,
+        rawText,
+        stats: createLongCorpusStats(rawText),
+        tokenIds,
+        totalTokens: tokenIds.length,
+        trainBatchCount: getBatchCount(trainExampleCount, options.batchSize),
+        trainExampleCount,
+        trainTokenCount,
+        trainTokenIds,
+        validationBatchCount: getBatchCount(validationExampleCount, options.batchSize),
+        validationExampleCount,
+        validationRatio: options.validationRatio,
+        validationTokenCount,
+        validationTokenIds,
+        vocabulary: [...tokenizer.vocabulary],
+        vocabularySize: tokenizer.vocabularySize,
+    }
+}
+
+async function loadOrCreateTokenizedCorpusCache(
+    rawText: string,
+    tokenizer: BpeTokenizer,
+): Promise<readonly number[]> {
+    const cachePath = createTokenizedCorpusCachePath()
+    const expectedCorpusHash = hashString(rawText)
+    const expectedTokenizerHash = hashTokenizer(tokenizer)
+    const expectedCorpusByteLength = Buffer.byteLength(rawText, 'utf8')
+
+    console.info(`  cache tokenisé: ${cachePath}`)
+
+    if (existsSync(cachePath)) {
+        try {
+            const cache = validateTokenizedCorpusCache(
+                JSON.parse(await readFile(cachePath, 'utf8')),
+            )
+            const mismatchReason = getTokenizedCorpusCacheMismatchReason(cache, {
+                corpusByteLength: expectedCorpusByteLength,
+                corpusHash: expectedCorpusHash,
+                tokenizerHash: expectedTokenizerHash,
+            })
+
+            if (mismatchReason === undefined) {
+                console.info('  cache tokenisé trouvé: compatible.')
+                console.info(`  tokenIds chargés: ${cache.tokenIds.length.toLocaleString('fr-FR')}`)
+
+                return cache.tokenIds
+            }
+
+            console.info(`  cache tokenisé ignoré: ${mismatchReason}.`)
+        } catch (error) {
+            console.info('  cache tokenisé ignoré: lecture ou validation impossible.')
+            console.info(
+                error instanceof Error ? `  raison: ${error.message}` : '  raison inconnue.',
+            )
+        }
+    } else {
+        console.info('  cache tokenisé absent: encodage complet nécessaire.')
+    }
+
+    console.info(
+        '  encodage du corpus avec le tokenizer chargé; cette étape peut prendre un moment sur un gros fichier.',
+    )
+    const tokenIds = encodeWithBpeProgress(tokenizer, rawText, createCorpusEncodingReporter())
+
+    await saveTokenizedCorpusCache(cachePath, {
+        corpusByteLength: expectedCorpusByteLength,
+        corpusHash: expectedCorpusHash,
+        tokenIds,
+        tokenizer,
+        tokenizerHash: expectedTokenizerHash,
+    })
+
+    console.info(`  cache tokenisé sauvegardé: ${cachePath}`)
+
+    return tokenIds
+}
+
+function createTokenizedCorpusCachePath(): string {
+    return join(
+        config.checkpointPath,
+        tokenizedCorpusCacheDirectoryName,
+        tokenizedCorpusCacheFileName,
+    )
+}
+
+async function saveTokenizedCorpusCache(
+    cachePath: string,
+    options: {
+        readonly corpusByteLength: number
+        readonly corpusHash: string
+        readonly tokenizer: BpeTokenizer
+        readonly tokenizerHash: string
+        readonly tokenIds: readonly number[]
+    },
+): Promise<void> {
+    const cache: TokenizedCorpusCache = {
+        corpusByteLength: options.corpusByteLength,
+        corpusHash: options.corpusHash,
+        corpusPath: corpus.filePath,
+        createdAt: new Date().toISOString(),
+        tokenIds: options.tokenIds,
+        tokenizerHash: options.tokenizerHash,
+        tokenizerVocabularySize: options.tokenizer.vocabularySize,
+        version: tokenizedCorpusCacheVersion,
+    }
+
+    await mkdir(join(config.checkpointPath, tokenizedCorpusCacheDirectoryName), {
+        recursive: true,
+    })
+    await writeFile(cachePath, `${JSON.stringify(cache, null, 2)}\n`, 'utf8')
+}
+
+function validateTokenizedCorpusCache(value: unknown): TokenizedCorpusCache {
+    if (!isRecord(value)) {
+        throw new Error('Le cache tokenisé doit être un objet JSON.')
+    }
+
+    if (value.version !== tokenizedCorpusCacheVersion) {
+        throw new Error(
+            `Version de cache tokenisé invalide. Attendu: ${String(tokenizedCorpusCacheVersion)}.`,
+        )
+    }
+
+    assertString(value.createdAt, 'createdAt')
+    assertString(value.corpusPath, 'corpusPath')
+    assertNonNegativeInteger(value.corpusByteLength, 'corpusByteLength')
+    assertString(value.corpusHash, 'corpusHash')
+    assertString(value.tokenizerHash, 'tokenizerHash')
+    assertPositiveInteger(value.tokenizerVocabularySize, 'tokenizerVocabularySize')
+
+    if (!Array.isArray(value.tokenIds)) {
+        throw new Error('tokenIds doit être un tableau.')
+    }
+
+    for (const [index, tokenId] of value.tokenIds.entries()) {
+        if (!Number.isInteger(tokenId) || tokenId < 0) {
+            throw new Error(`tokenIds[${String(index)}] doit être un entier positif ou nul.`)
+        }
+    }
+
+    return value as TokenizedCorpusCache
+}
+
+function getTokenizedCorpusCacheMismatchReason(
+    cache: TokenizedCorpusCache,
+    expected: {
+        readonly corpusByteLength: number
+        readonly corpusHash: string
+        readonly tokenizerHash: string
+    },
+): string | undefined {
+    if (cache.corpusByteLength !== expected.corpusByteLength) {
+        return 'taille du corpus différente'
+    }
+
+    if (cache.corpusHash !== expected.corpusHash) {
+        return 'contenu du corpus différent'
+    }
+
+    if (cache.tokenizerHash !== expected.tokenizerHash) {
+        return 'tokenizer différent'
+    }
+
+    return undefined
+}
+
+function encodeWithBpeProgress(
+    tokenizer: BpeTokenizer,
+    text: string,
+    onProgress: (progress: CorpusEncodingProgress) => void,
+): number[] {
+    const startedAt = Date.now()
+    const totalSteps = tokenizer.merges.length + 2
+    let pieces = Array.from(text)
+
+    onProgress({
+        currentStep: 1,
+        elapsedMs: Date.now() - startedAt,
+        label: 'validation des caractères',
+        progressRatio: 1 / totalSteps,
+        totalSteps,
+    })
+
+    for (const [characterIndex, character] of pieces.entries()) {
+        if (!tokenizer.tokenToId.has(character)) {
+            throw new Error(
+                `Caractère absent du vocabulaire BPE: "${character}" à la position ${String(
+                    characterIndex,
+                )}. Le tokenizer doit être entraîné sur un corpus qui contient ce caractère.`,
+            )
+        }
+    }
+
+    for (const [mergeIndex, merge] of tokenizer.merges.entries()) {
+        pieces = mergePairForEncoding(pieces, merge)
+
+        onProgress({
+            currentStep: mergeIndex + 2,
+            elapsedMs: Date.now() - startedAt,
+            label: `merge ${String(mergeIndex + 1)}/${String(tokenizer.merges.length)}`,
+            progressRatio: (mergeIndex + 2) / totalSteps,
+            totalSteps,
+        })
+    }
+
+    onProgress({
+        currentStep: totalSteps,
+        elapsedMs: Date.now() - startedAt,
+        label: 'conversion en ids',
+        progressRatio: 1,
+        totalSteps,
+    })
+
+    return pieces.map((piece) => {
+        const tokenId = tokenizer.tokenToId.get(piece)
+
+        if (tokenId === undefined) {
+            throw new Error(`Token BPE introuvable dans le vocabulaire: "${piece}".`)
+        }
+
+        return tokenId
+    })
+}
+
+function mergePairForEncoding(pieces: readonly string[], merge: BpeMerge): string[] {
+    const result: string[] = []
+
+    for (let index = 0; index < pieces.length; index++) {
+        const current = pieces[index]
+        const next = pieces[index + 1]
+
+        if (current === merge.left && next === merge.right) {
+            result.push(merge.merged)
+            index++
+        } else if (current !== undefined) {
+            result.push(current)
+        }
+    }
+
+    return result
+}
+
+function createLongCorpusStats(rawText: string): LongCorpusStats {
+    return {
+        byteLength: Buffer.byteLength(rawText, 'utf8'),
+        characterCount: Array.from(rawText).length,
+        lineCount: rawText.length === 0 ? 0 : rawText.split(/\r\n|\n|\r/u).length,
+    }
+}
+
+function hashTokenizer(tokenizer: BpeTokenizer): string {
+    return hashString(
+        JSON.stringify({
+            merges: tokenizer.merges,
+            type: tokenizer.type,
+            version: tokenizer.version,
+            vocabulary: tokenizer.vocabulary,
+        }),
+    )
+}
+
+function hashString(value: string): string {
+    return createHash('sha256').update(value, 'utf8').digest('hex')
+}
+
 function printLoadedCheckpoint(result: ModelLoadResult): void {
     if (!result.loadedFromCheckpoint) {
         return
@@ -402,11 +781,20 @@ function printGeneration(
     result: ModelLoadResult,
     rawPrompt: string,
     options: FinalTinyLlmGenerationOptions,
+    showProgress = false,
 ): void {
-    const prompt = preparePrompt(result.tokenizer, rawPrompt)
-    const generation = generateFinalTinyLlmText(result.model, result.tokenizer, prompt, options)
-
     console.info(`  ${formatSamplingLabel(options)}:`)
+    console.info('    préparation du prompt...')
+    const prompt = preparePrompt(result.tokenizer, rawPrompt)
+    const generation = generateFinalTinyLlmText(result.model, result.tokenizer, prompt, {
+        ...options,
+        ...(showProgress ? { onProgress: createGenerationProgressReporter(result.tokenizer) } : {}),
+    })
+
+    if (showProgress) {
+        finishTrainingProgressLine()
+    }
+
     console.info(`    prompt utilisé: "${prompt}"`)
     console.info(`    texte: "${generation.text}"`)
 }
@@ -421,27 +809,56 @@ async function startChat(result: ModelLoadResult): Promise<void> {
 
     const readline = createInterface({ input, output })
     let shouldContinue = true
+    let pendingPrompt = ''
 
     try {
         while (shouldContinue) {
-            const message = await readline.question('Utilisateur> ')
+            const question = pendingPrompt.length === 0 ? 'Utilisateur> ' : 'Complément> '
+            const message = await readline.question(question)
 
             if (message.trim().toLowerCase() === 'exit') {
                 shouldContinue = false
                 continue
             }
 
+            const nextPrompt =
+                pendingPrompt.length === 0 ? message : `${pendingPrompt.trimEnd()} ${message}`
+
             try {
-                const prompt = preparePrompt(result.tokenizer, message)
+                console.info('Préparation du prompt...')
+                const prompt = preparePrompt(result.tokenizer, nextPrompt)
+                console.info(
+                    `Génération en cours (${String(config.maxNewTokens)} tokens max, ${formatSamplingLabel(
+                        createGenerationOptions(),
+                    )})...`,
+                )
                 const generation = generateFinalTinyLlmText(
                     result.model,
                     result.tokenizer,
                     prompt,
-                    createGenerationOptions(),
+                    {
+                        ...createGenerationOptions(),
+                        onProgress: createGenerationProgressReporter(result.tokenizer),
+                    },
                 )
+                finishTrainingProgressLine()
 
                 console.info(`Assistant> ${generation.generatedText}`)
+                pendingPrompt = ''
             } catch (error) {
+                if (error instanceof PromptTooShortError) {
+                    pendingPrompt = nextPrompt
+                    console.info(
+                        `Message trop court: ${String(error.tokenCount)}/${String(
+                            error.expectedTokenCount,
+                        )} tokens BPE.`,
+                    )
+                    console.info(
+                        'Ajoute du contexte: le prochain message sera ajouté au texte déjà saisi.',
+                    )
+                    continue
+                }
+
                 console.info(
                     error instanceof Error
                         ? `Message non générable: ${error.message}`
@@ -461,13 +878,7 @@ function preparePrompt(tokenizer: BpeTokenizer, rawPrompt: string): string {
     const tokenIds = tokenizer.encode(rawPrompt)
 
     if (tokenIds.length < config.contextLength) {
-        const paddingSource = tokenizer.decode(
-            tokenizer.encode(corpus.rawText).slice(0, config.contextLength),
-        )
-        const paddedPrompt = `${paddingSource} ${rawPrompt}`
-        const paddedTokenIds = tokenizer.encode(paddedPrompt)
-
-        return tokenizer.decode(paddedTokenIds.slice(-config.contextLength))
+        throw new PromptTooShortError(tokenIds.length, config.contextLength)
     }
 
     if (tokenIds.length > config.contextLength) {
@@ -530,6 +941,9 @@ function createFallbackDefaults(): FinalTinyLlmDemoConfig {
         batchOrder: 'shuffled',
         batchSize: 4,
         bpeMaxTrainingCharacters: 20_000,
+        bpeMaximumMergedTokenLength: 24,
+        bpeMaximumSpacesInMergedToken: 1,
+        bpeMinimumMergeCount: 2,
         bpeVocabularySize: 80,
         checkpointPath: defaultCheckpointPath,
         checkpointVersion: undefined,
@@ -561,6 +975,9 @@ function createPrivateCorpusDefaults(): FinalTinyLlmDemoConfig {
         batchOrder: 'shuffled',
         batchSize: 16,
         bpeMaxTrainingCharacters: 300_000,
+        bpeMaximumMergedTokenLength: 24,
+        bpeMaximumSpacesInMergedToken: 1,
+        bpeMinimumMergeCount: 10,
         bpeVocabularySize: 1_000,
         checkpointPath: defaultCheckpointPath,
         checkpointVersion: undefined,
@@ -594,6 +1011,18 @@ function normalizeConfig(rawConfig: Record<string, unknown>): FinalTinyLlmDemoCo
         bpeMaxTrainingCharacters: readPositiveInteger(
             rawConfig.bpeMaxTrainingCharacters,
             'bpeMaxTrainingCharacters',
+        ),
+        bpeMaximumMergedTokenLength: readPositiveInteger(
+            rawConfig.bpeMaximumMergedTokenLength,
+            'bpeMaximumMergedTokenLength',
+        ),
+        bpeMaximumSpacesInMergedToken: readNonNegativeInteger(
+            rawConfig.bpeMaximumSpacesInMergedToken,
+            'bpeMaximumSpacesInMergedToken',
+        ),
+        bpeMinimumMergeCount: readPositiveInteger(
+            rawConfig.bpeMinimumMergeCount,
+            'bpeMinimumMergeCount',
         ),
         bpeVocabularySize: readPositiveInteger(rawConfig.bpeVocabularySize, 'bpeVocabularySize'),
         checkpointPath: readString(rawConfig.checkpointPath, 'checkpointPath'),
@@ -732,6 +1161,88 @@ function createTrainingProgressReporter(): (progress: FinalTinyLlmTrainingProgre
     }
 }
 
+function createCheckpointLoadProgressReporter(): (
+    progress: FinalTinyLlmCheckpointLoadProgress,
+) => void {
+    let lastPrintedAt = 0
+    let lastPrintedMessage = ''
+
+    return (progress) => {
+        const now = Date.now()
+        const message = formatCheckpointLoadProgress(progress)
+
+        if (
+            message === lastPrintedMessage &&
+            now - lastPrintedAt < progressLogIntervalMs &&
+            progress.phase !== 'done'
+        ) {
+            return
+        }
+
+        lastPrintedAt = now
+        lastPrintedMessage = message
+
+        if (process.stdout.isTTY) {
+            process.stdout.write(`\r${message}\x1B[K`)
+        } else {
+            console.info(message)
+        }
+    }
+}
+
+function formatCheckpointLoadProgress(progress: FinalTinyLlmCheckpointLoadProgress): string {
+    if (progress.phase !== 'variables') {
+        return `  chargement checkpoint | ${progress.phase} | ${formatDuration(progress.elapsedMs)}`
+    }
+
+    const percent =
+        progress.totalVariables === 0
+            ? 100
+            : Math.floor((progress.loadedVariables / progress.totalVariables) * 100)
+    const currentVariable =
+        progress.currentVariableName === undefined ? '' : ` | ${progress.currentVariableName}`
+
+    return `  chargement checkpoint | ${String(percent).padStart(3, ' ')}% | variable ${String(
+        progress.loadedVariables,
+    )}/${String(progress.totalVariables)}${currentVariable} | ${formatDuration(progress.elapsedMs)}`
+}
+
+function createGenerationProgressReporter(
+    tokenizer: BpeTokenizer,
+): (step: FinalTinyLlmGenerationStep) => void {
+    const startedAt = Date.now()
+    let lastPrintedAt = 0
+    let lastPrintedStep = 0
+
+    return (step) => {
+        const now = Date.now()
+
+        if (
+            step.step === lastPrintedStep &&
+            now - lastPrintedAt < progressLogIntervalMs &&
+            step.step < config.maxNewTokens
+        ) {
+            return
+        }
+
+        lastPrintedAt = now
+        lastPrintedStep = step.step
+
+        const tokenText = tokenizer.decode([step.selectedTokenId]).replace(/\n/gu, '\\n')
+        const message = `  génération | ${String(step.step).padStart(3, ' ')}/${String(
+            config.maxNewTokens,
+        )} | token "${tokenText}" | p=${step.selectedTokenProbability.toFixed(
+            4,
+        )} | ${formatDuration(now - startedAt)}`
+
+        if (process.stdout.isTTY) {
+            process.stdout.write(`\r${message}\x1B[K`)
+        } else {
+            console.info(message)
+        }
+    }
+}
+
 function createBpeProgressReporter(): (progress: BpeTokenizerTrainingProgress) => void {
     let lastPrintedAt = 0
     let lastPrintedPercent = -1
@@ -767,6 +1278,40 @@ function createBpeProgressReporter(): (progress: BpeTokenizerTrainingProgress) =
         }
 
         console.info(message)
+    }
+}
+
+function createCorpusEncodingReporter(): (progress: CorpusEncodingProgress) => void {
+    let lastPrintedAt = 0
+    let lastPrintedPercent = -1
+
+    return (progress) => {
+        const percent = Math.floor(progress.progressRatio * 100)
+        const now = Date.now()
+
+        if (
+            percent === lastPrintedPercent &&
+            now - lastPrintedAt < progressLogIntervalMs &&
+            percent < 100
+        ) {
+            return
+        }
+
+        lastPrintedAt = now
+        lastPrintedPercent = percent
+
+        const message = `  encodage corpus | ${String(percent).padStart(
+            3,
+            ' ',
+        )}% | étape ${String(progress.currentStep)}/${String(progress.totalSteps)} | ${
+            progress.label
+        } | ${formatDuration(progress.elapsedMs)}`
+
+        if (process.stdout.isTTY) {
+            process.stdout.write(`\r${message}\x1B[K`)
+        } else {
+            console.info(message)
+        }
     }
 }
 
@@ -840,6 +1385,24 @@ function readString(value: unknown, name: string): string {
     return value
 }
 
+function assertString(value: unknown, name: string): asserts value is string {
+    if (typeof value !== 'string' || value.length === 0) {
+        throw new Error(`${name} doit être une chaîne non vide.`)
+    }
+}
+
+function assertPositiveInteger(value: unknown, name: string): asserts value is number {
+    if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+        throw new Error(`${name} doit être un entier strictement positif.`)
+    }
+}
+
+function assertNonNegativeInteger(value: unknown, name: string): asserts value is number {
+    if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+        throw new Error(`${name} doit être un entier positif ou nul.`)
+    }
+}
+
 function readOptionalString(value: unknown): string | undefined {
     if (value === undefined) {
         return undefined
@@ -855,6 +1418,14 @@ function readOptionalString(value: unknown): string | undefined {
 function readPositiveInteger(value: unknown, name: string): number {
     if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
         throw new Error(`${name} doit être un entier strictement positif.`)
+    }
+
+    return value
+}
+
+function readNonNegativeInteger(value: unknown, name: string): number {
+    if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+        throw new Error(`${name} doit être un entier positif ou nul.`)
     }
 
     return value

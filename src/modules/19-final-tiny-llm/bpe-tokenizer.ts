@@ -22,7 +22,15 @@ export type BpeTokenizer = {
 export type BpeTokenizerTrainingOptions = {
     readonly vocabularySize: number
     readonly maxTrainingCharacters?: number
+    readonly minimumMergeCount?: number
+    readonly maximumMergedTokenLength?: number
+    readonly maximumSpacesInMergedToken?: number
     readonly onProgress?: (progress: BpeTokenizerTrainingProgress) => void
+}
+
+type BpeMergeConstraints = {
+    readonly maximumMergedTokenLength: number
+    readonly maximumSpacesInMergedToken: number
 }
 
 export type BpeTokenizerTrainingProgress = {
@@ -36,12 +44,26 @@ export type BpeTokenizerTrainingProgress = {
 
 const tokenizerVersion = 1
 const unknownCharacterErrorPrefix = 'Caractère absent du vocabulaire BPE'
+const defaultMinimumMergeCount = 2
+const defaultMaximumMergedTokenLength = 24
+const defaultMaximumSpacesInMergedToken = 1
 
 export function trainBpeTokenizer(
     text: string,
     options: BpeTokenizerTrainingOptions,
 ): BpeTokenizer {
     validatePositiveInteger(options.vocabularySize, 'vocabularySize')
+    const minimumMergeCount = options.minimumMergeCount ?? defaultMinimumMergeCount
+    const constraints = {
+        maximumMergedTokenLength:
+            options.maximumMergedTokenLength ?? defaultMaximumMergedTokenLength,
+        maximumSpacesInMergedToken:
+            options.maximumSpacesInMergedToken ?? defaultMaximumSpacesInMergedToken,
+    }
+
+    validatePositiveInteger(minimumMergeCount, 'minimumMergeCount')
+    validatePositiveInteger(constraints.maximumMergedTokenLength, 'maximumMergedTokenLength')
+    validateNonNegativeInteger(constraints.maximumSpacesInMergedToken, 'maximumSpacesInMergedToken')
 
     const trainingText =
         options.maxTrainingCharacters === undefined
@@ -52,7 +74,10 @@ export function trainBpeTokenizer(
         throw new Error('Le texte d’entraînement BPE ne doit pas être vide.')
     }
 
-    const initialVocabulary = Array.from(new Set(Array.from(trainingText))).sort()
+    // Le vocabulaire de base doit couvrir tout le corpus, même si les merges BPE
+    // sont appris sur une portion limitée. Sinon un caractère rare placé tard dans
+    // le fichier pourrait être impossible à encoder ensuite.
+    const initialVocabulary = Array.from(new Set(Array.from(text))).sort()
 
     if (options.vocabularySize < initialVocabulary.length) {
         throw new Error(
@@ -69,9 +94,9 @@ export function trainBpeTokenizer(
     const startedAt = Date.now()
 
     while (vocabulary.length < options.vocabularySize) {
-        const bestPair = findMostFrequentPair(pieces)
+        const bestPair = findMostFrequentPair(pieces, constraints)
 
-        if (bestPair === undefined || bestPair.count < 2) {
+        if (bestPair === undefined || bestPair.count < minimumMergeCount) {
             break
         }
 
@@ -193,6 +218,7 @@ function createBpeTokenizer(
 
 function findMostFrequentPair(
     pieces: readonly string[],
+    constraints: BpeMergeConstraints,
 ): { readonly left: string; readonly right: string; readonly count: number } | undefined {
     const counts = new Map<string, { left: string; right: string; count: number }>()
 
@@ -202,6 +228,10 @@ function findMostFrequentPair(
 
         if (left === undefined || right === undefined) {
             throw new Error('Paire BPE invalide pendant l’entraînement.')
+        }
+
+        if (!isAllowedMergedToken(`${left}${right}`, constraints)) {
+            continue
         }
 
         const key = `${left}\u0000${right}`
@@ -224,6 +254,17 @@ function findMostFrequentPair(
 
         return leftKey.localeCompare(rightKey)
     })[0]
+}
+
+function isAllowedMergedToken(merged: string, constraints: BpeMergeConstraints): boolean {
+    return (
+        Array.from(merged).length <= constraints.maximumMergedTokenLength &&
+        countWhitespaceCharacters(merged) <= constraints.maximumSpacesInMergedToken
+    )
+}
+
+function countWhitespaceCharacters(value: string): number {
+    return value.match(/\s/gu)?.length ?? 0
 }
 
 function mergePair(
@@ -297,6 +338,12 @@ function assertString(value: unknown, name: string): asserts value is string {
 function validatePositiveInteger(value: number, name: string): void {
     if (!Number.isInteger(value) || value <= 0) {
         throw new Error(`${name} doit être un entier strictement positif.`)
+    }
+}
+
+function validateNonNegativeInteger(value: number, name: string): void {
+    if (!Number.isInteger(value) || value < 0) {
+        throw new Error(`${name} doit être un entier positif ou nul.`)
     }
 }
 

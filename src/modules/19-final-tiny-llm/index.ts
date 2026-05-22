@@ -139,6 +139,7 @@ export type FinalTinyLlmGenerationOptions = {
     readonly temperature?: number
     readonly topK?: number
     readonly seed?: number
+    readonly onProgress?: (step: FinalTinyLlmGenerationStep) => void
 }
 
 export type FinalTinyLlmGenerationStep = {
@@ -179,6 +180,18 @@ export type FinalTinyLlmCheckpointVariable = {
     readonly fileName: string
     readonly shape: readonly number[]
     readonly dtype: 'float32'
+}
+
+export type FinalTinyLlmCheckpointLoadProgress = {
+    readonly phase: 'metadata' | 'tokenizer' | 'model' | 'variables' | 'done'
+    readonly loadedVariables: number
+    readonly totalVariables: number
+    readonly currentVariableName: string | undefined
+    readonly elapsedMs: number
+}
+
+export type LoadFinalTinyLlmCheckpointOptions = {
+    readonly onProgress?: (progress: FinalTinyLlmCheckpointLoadProgress) => void
 }
 
 export type SaveFinalTinyLlmCheckpointMetadata = {
@@ -308,14 +321,17 @@ export function generateFinalTinyLlmText(
 
         tokenIds.push(selectedTokenId)
         generatedTokenIds.push(selectedTokenId)
-        steps.push({
+        const generationStep = {
             contextTokenIds,
             selectedTokenId,
             selectedTokenProbability,
             step,
             strategy: options.strategy,
             tokenIdsAfterPrediction: [...tokenIds],
-        })
+        }
+
+        steps.push(generationStep)
+        options.onProgress?.(generationStep)
     }
 
     return {
@@ -550,9 +566,29 @@ export async function saveFinalTinyLlmCheckpoint(
 
 export async function loadFinalTinyLlmCheckpoint(
     directoryPath: string,
+    options: LoadFinalTinyLlmCheckpointOptions = {},
 ): Promise<{ readonly model: FinalTinyLlm; readonly tokenizer: BpeTokenizer }> {
+    const startedAt = Date.now()
+    const notifyProgress = (
+        phase: FinalTinyLlmCheckpointLoadProgress['phase'],
+        loadedVariables = 0,
+        totalVariables = 0,
+        currentVariableName?: string,
+    ): void => {
+        options.onProgress?.({
+            currentVariableName,
+            elapsedMs: Date.now() - startedAt,
+            loadedVariables,
+            phase,
+            totalVariables,
+        })
+    }
+
+    notifyProgress('metadata')
     const metadata = await readCheckpointMetadata(directoryPath)
+    notifyProgress('tokenizer', 0, metadata.variables.length)
     const tokenizer = await loadBpeTokenizer(join(directoryPath, metadata.tokenizerFileName))
+    notifyProgress('model', 0, metadata.variables.length)
     const model = createFinalTinyLlm(metadata.modelOptions)
     const variableByName = new Map(
         getNamedVariables(model).map((variable) => [variable.name, variable]),
@@ -560,13 +596,19 @@ export async function loadFinalTinyLlmCheckpoint(
     const loadedVariableNames = new Set<string>()
 
     try {
-        for (const variableMetadata of metadata.variables) {
+        for (const [variableIndex, variableMetadata] of metadata.variables.entries()) {
             const variable = variableByName.get(variableMetadata.name)
 
             if (variable === undefined) {
                 throw new Error(`Variable inconnue dans le checkpoint: ${variableMetadata.name}.`)
             }
 
+            notifyProgress(
+                'variables',
+                variableIndex,
+                metadata.variables.length,
+                variableMetadata.name,
+            )
             assertShape(variable.tensor.shape, variableMetadata.shape)
 
             const rawBuffer = await readFile(join(directoryPath, variableMetadata.fileName))
@@ -576,6 +618,12 @@ export async function loadFinalTinyLlmCheckpoint(
             variable.tensor.assign(tensor)
             tensor.dispose()
             loadedVariableNames.add(variableMetadata.name)
+            notifyProgress(
+                'variables',
+                variableIndex + 1,
+                metadata.variables.length,
+                variableMetadata.name,
+            )
         }
 
         for (const variableName of variableByName.keys()) {
@@ -583,6 +631,8 @@ export async function loadFinalTinyLlmCheckpoint(
                 throw new Error(`Variable manquante dans le checkpoint: ${variableName}.`)
             }
         }
+
+        notifyProgress('done', metadata.variables.length, metadata.variables.length)
 
         return { model, tokenizer }
     } catch (error) {
