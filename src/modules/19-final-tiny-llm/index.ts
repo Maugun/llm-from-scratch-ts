@@ -139,6 +139,9 @@ export type FinalTinyLlmGenerationOptions = {
     readonly temperature?: number
     readonly topK?: number
     readonly seed?: number
+    readonly repetitionPenalty?: number
+    readonly repetitionWindow?: number
+    readonly noRepeatNgramSize?: number
     readonly onProgress?: (step: FinalTinyLlmGenerationStep) => void
 }
 
@@ -313,11 +316,16 @@ export function generateFinalTinyLlmText(
     for (let step = 1; step <= options.maxNewTokens; step++) {
         const contextTokenIds = tokenIds.slice(-model.contextLength)
         const probabilities = predictFinalTinyLlmProbabilities(model, contextTokenIds)
+        const selectionProbabilities = applyNoRepeatNgramPenalty(
+            applyRepetitionPenalty(probabilities, tokenIds, options),
+            tokenIds,
+            options,
+        )
         const selectedTokenId = selectNextToken(
-            probabilities,
+            selectionProbabilities,
             createSamplingSelectionOptions(options, random),
         )
-        const selectedTokenProbability = readNumberAt(probabilities, selectedTokenId)
+        const selectedTokenProbability = readNumberAt(selectionProbabilities, selectedTokenId)
 
         tokenIds.push(selectedTokenId)
         generatedTokenIds.push(selectedTokenId)
@@ -1016,6 +1024,98 @@ function createSamplingSelectionOptions(
         ...(options.temperature === undefined ? {} : { temperature: options.temperature }),
         ...(options.topK === undefined ? {} : { topK: options.topK }),
     }
+}
+
+function applyRepetitionPenalty(
+    probabilities: readonly number[],
+    tokenIds: readonly number[],
+    options: FinalTinyLlmGenerationOptions,
+): readonly number[] {
+    const penalty = options.repetitionPenalty ?? 1
+
+    if (penalty === 1) {
+        return probabilities
+    }
+
+    validatePositiveNumber(penalty, 'repetitionPenalty')
+
+    if (penalty < 1) {
+        throw new Error('repetitionPenalty doit être supérieur ou égal à 1.')
+    }
+
+    const repetitionWindow = options.repetitionWindow ?? tokenIds.length
+    validatePositiveInteger(repetitionWindow, 'repetitionWindow')
+
+    const repeatedTokenIds = new Set(tokenIds.slice(-repetitionWindow))
+    const adjustedProbabilities = probabilities.map((probability, tokenId) =>
+        repeatedTokenIds.has(tokenId) ? probability / penalty : probability,
+    )
+    const total = adjustedProbabilities.reduce((sum, probability) => sum + probability, 0)
+
+    if (total <= 0) {
+        return probabilities
+    }
+
+    return adjustedProbabilities.map((probability) => probability / total)
+}
+
+function applyNoRepeatNgramPenalty(
+    probabilities: readonly number[],
+    tokenIds: readonly number[],
+    options: FinalTinyLlmGenerationOptions,
+): readonly number[] {
+    const ngramSize = options.noRepeatNgramSize ?? 0
+
+    if (ngramSize === 0) {
+        return probabilities
+    }
+
+    validatePositiveInteger(ngramSize, 'noRepeatNgramSize')
+
+    if (ngramSize === 1) {
+        return maskTokenIds(probabilities, new Set(tokenIds))
+    }
+
+    if (tokenIds.length < ngramSize - 1) {
+        return probabilities
+    }
+
+    const prefix = tokenIds.slice(-(ngramSize - 1))
+    const blockedTokenIds = new Set<number>()
+
+    for (let index = 0; index <= tokenIds.length - ngramSize; index++) {
+        const candidatePrefix = tokenIds.slice(index, index + ngramSize - 1)
+
+        if (arraysAreEqual(candidatePrefix, prefix)) {
+            blockedTokenIds.add(readNumberAt(tokenIds, index + ngramSize - 1))
+        }
+    }
+
+    return maskTokenIds(probabilities, blockedTokenIds)
+}
+
+function maskTokenIds(
+    probabilities: readonly number[],
+    blockedTokenIds: ReadonlySet<number>,
+): readonly number[] {
+    if (blockedTokenIds.size === 0) {
+        return probabilities
+    }
+
+    const adjustedProbabilities = probabilities.map((probability, tokenId) =>
+        blockedTokenIds.has(tokenId) ? 0 : probability,
+    )
+    const total = adjustedProbabilities.reduce((sum, probability) => sum + probability, 0)
+
+    if (total <= 0) {
+        return probabilities
+    }
+
+    return adjustedProbabilities.map((probability) => probability / total)
+}
+
+function arraysAreEqual(left: readonly number[], right: readonly number[]): boolean {
+    return left.length === right.length && left.every((value, index) => value === right[index])
 }
 
 function formatChatPrompt(

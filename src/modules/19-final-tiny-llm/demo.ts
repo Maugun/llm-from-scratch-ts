@@ -71,6 +71,9 @@ type FinalTinyLlmDemoConfig = {
     readonly strategy: 'greedy' | 'temperature' | 'topK'
     readonly temperature: number
     readonly topK: number
+    readonly repetitionPenalty: number
+    readonly repetitionWindow: number
+    readonly noRepeatNgramSize: number
     readonly seed: number
     readonly prompt: string
 }
@@ -891,6 +894,9 @@ function preparePrompt(tokenizer: BpeTokenizer, rawPrompt: string): string {
 function createGenerationOptions(): FinalTinyLlmGenerationOptions {
     return {
         maxNewTokens: config.maxNewTokens,
+        noRepeatNgramSize: config.noRepeatNgramSize,
+        repetitionPenalty: config.repetitionPenalty,
+        repetitionWindow: config.repetitionWindow,
         seed: config.seed,
         strategy: config.strategy,
         temperature: config.temperature,
@@ -958,7 +964,10 @@ function createFallbackDefaults(): FinalTinyLlmDemoConfig {
         maxNewTokens: 80,
         maxTrainBatchesPerEpoch: 10,
         maxValidationBatches: 2,
+        noRepeatNgramSize: 3,
         prompt: 'bonjour le',
+        repetitionPenalty: 1.15,
+        repetitionWindow: 128,
         saveBestEpochOnly: false,
         skipCheckpointWhenNoImprovement: false,
         seed: 19,
@@ -992,7 +1001,10 @@ function createPrivateCorpusDefaults(): FinalTinyLlmDemoConfig {
         maxNewTokens: 200,
         maxTrainBatchesPerEpoch: 100,
         maxValidationBatches: 10,
+        noRepeatNgramSize: 3,
         prompt: 'Utilisateur: Bonjour\nAssistant:',
+        repetitionPenalty: 1.15,
+        repetitionWindow: 128,
         saveBestEpochOnly: false,
         skipCheckpointWhenNoImprovement: false,
         seed: 19,
@@ -1047,7 +1059,10 @@ function normalizeConfig(rawConfig: Record<string, unknown>): FinalTinyLlmDemoCo
             rawConfig.maxValidationBatches,
             'maxValidationBatches',
         ),
+        noRepeatNgramSize: readNonNegativeInteger(rawConfig.noRepeatNgramSize, 'noRepeatNgramSize'),
         prompt: readString(rawConfig.prompt, 'prompt'),
+        repetitionPenalty: readPositiveNumber(rawConfig.repetitionPenalty, 'repetitionPenalty'),
+        repetitionWindow: readPositiveInteger(rawConfig.repetitionWindow, 'repetitionWindow'),
         saveBestEpochOnly: readOptionalBoolean(rawConfig.saveBestEpochOnly, 'saveBestEpochOnly'),
         seed: readPositiveInteger(rawConfig.seed, 'seed'),
         shuffleSeed: readPositiveInteger(rawConfig.shuffleSeed, 'shuffleSeed'),

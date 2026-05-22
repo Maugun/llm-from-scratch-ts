@@ -278,6 +278,60 @@ describe('évaluation, entraînement et génération', () => {
         }
     })
 
+    it('applique une pénalité de répétition pendant la génération', () => {
+        const tokenizer = trainBpeTokenizer('abcdeabcde', { vocabularySize: 5 })
+        const model = createTinyModel(5)
+
+        try {
+            forceSimpleOutputDistribution(model, [0, 3, 1, -1, -2])
+
+            const withoutPenalty = generateFinalTinyLlmText(model, tokenizer, 'abc', {
+                maxNewTokens: 1,
+                strategy: 'greedy',
+            })
+            const withPenalty = generateFinalTinyLlmText(model, tokenizer, 'abc', {
+                maxNewTokens: 1,
+                repetitionPenalty: 1_000_000,
+                repetitionWindow: 3,
+                strategy: 'greedy',
+            })
+
+            expect(withPenalty.generatedTokenIds).toHaveLength(1)
+            expect(withPenalty.generatedTokenIds[0]).not.toBe(withoutPenalty.generatedTokenIds[0])
+        } finally {
+            disposeFinalTinyLlm(model)
+        }
+    })
+
+    it('bloque un trigramme déjà vu pendant la génération', () => {
+        const tokenizer = trainBpeTokenizer('abcde', { vocabularySize: 5 })
+        const model = createTinyModel(5)
+        const cTokenId = tokenizer.tokenToId.get('c')
+
+        try {
+            if (cTokenId === undefined) {
+                throw new Error('Le token "c" devrait être présent dans le tokenizer de test.')
+            }
+
+            forceSimpleOutputDistribution(model, [0, -1, 5, 1, -2])
+
+            const withoutNoRepeat = generateFinalTinyLlmText(model, tokenizer, 'abcab', {
+                maxNewTokens: 1,
+                strategy: 'greedy',
+            })
+            const withNoRepeat = generateFinalTinyLlmText(model, tokenizer, 'abcab', {
+                maxNewTokens: 1,
+                noRepeatNgramSize: 3,
+                strategy: 'greedy',
+            })
+
+            expect(withoutNoRepeat.generatedTokenIds[0]).toBe(cTokenId)
+            expect(withNoRepeat.generatedTokenIds[0]).not.toBe(cTokenId)
+        } finally {
+            disposeFinalTinyLlm(model)
+        }
+    })
+
     it('formate un chat playground comme une génération de texte', () => {
         const tokenizer = trainBpeTokenizer('Utilisateur: Bonjour\nAssistant: Salut', {
             vocabularySize: 20,
@@ -406,6 +460,9 @@ describe('CLI/config module 19', () => {
             strategy: 'greedy',
             temperature: 1,
             topK: 2,
+            repetitionPenalty: 1.15,
+            repetitionWindow: 128,
+            noRepeatNgramSize: 3,
             validationRatio: 0.4,
         })
 

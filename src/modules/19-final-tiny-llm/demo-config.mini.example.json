@@ -25,6 +25,9 @@
     "strategy": "topK",
     "temperature": 0.9,
     "topK": 5,
+    "repetitionPenalty": 1.15,
+    "repetitionWindow": 32,
+    "noRepeatNgramSize": 3,
     "seed": 19,
     "prompt": "bonjour le"
 }

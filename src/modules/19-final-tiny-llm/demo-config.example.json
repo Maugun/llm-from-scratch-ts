@@ -25,6 +25,9 @@
     "strategy": "topK",
     "temperature": 0.9,
     "topK": 20,
+    "repetitionPenalty": 1.15,
+    "repetitionWindow": 128,
+    "noRepeatNgramSize": 3,
     "seed": 19,
     "prompt": "Utilisateur: Bonjour\nAssistant:"
 }
