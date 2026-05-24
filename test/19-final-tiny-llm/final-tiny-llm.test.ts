@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { execFile } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -479,6 +479,83 @@ describe('CLI/config module 19', () => {
         expect(result.stdout).toContain('saveBestEpochOnly: false')
         expect(result.stdout).toContain('skipCheckpointWhenNoImprovement: false')
     })
+
+    it('importe un cache tokenisé explicite même sans version v1 existante', async () => {
+        const rawText = 'abcabcabcabcabcabcabcabcabcabc'
+        const corpusPath = join(temporaryDirectory, 'corpus.txt')
+        const sourceCheckpointPath = join(temporaryDirectory, 'source-checkpoint')
+        const checkpointPath = join(temporaryDirectory, 'fresh-checkpoint')
+        const sourceConfigPath = join(temporaryDirectory, 'source-config.json')
+        const configPath = join(temporaryDirectory, 'config-with-cache.json')
+
+        await writeFile(corpusPath, rawText, 'utf8')
+
+        const baseConfig = {
+            batchOrder: 'shuffled',
+            batchSize: 2,
+            bpeMaxTrainingCharacters: 1000,
+            bpeVocabularySize: 3,
+            checkpointPath,
+            contextLength: 3,
+            corpusPath,
+            embeddingDimension: 8,
+            epochs: 1,
+            feedForwardDimension: 16,
+            headCount: 4,
+            layerCount: 1,
+            learningRate: 0.001,
+            maxNewTokens: 2,
+            maxTrainBatchesPerEpoch: 1,
+            maxValidationBatches: 1,
+            noRepeatNgramSize: 3,
+            prompt: 'abc',
+            repetitionPenalty: 1.15,
+            repetitionWindow: 8,
+            seed: 19,
+            shuffleSeed: 19,
+            strategy: 'greedy',
+            temperature: 1,
+            topK: 2,
+            validationRatio: 0.2,
+        }
+
+        await saveJson(sourceConfigPath, {
+            ...baseConfig,
+            checkpointPath: sourceCheckpointPath,
+        })
+        await execFileAsync('node', [
+            '--import',
+            'tsx',
+            'src/modules/19-final-tiny-llm/demo.ts',
+            '--mode',
+            'train',
+            '--config',
+            sourceConfigPath,
+        ])
+
+        await saveJson(configPath, {
+            ...baseConfig,
+            checkpointPath,
+        })
+
+        const result = await execFileAsync('node', [
+            '--import',
+            'tsx',
+            'src/modules/19-final-tiny-llm/demo.ts',
+            '--mode',
+            'train',
+            '--config',
+            configPath,
+            '--dataset-cache-from',
+            sourceCheckpointPath,
+        ])
+
+        expect(result.stdout).toContain('version à charger: aucune')
+        expect(result.stdout).toContain('Import du tokenizer BPE:')
+        expect(result.stdout).toContain('cache importé: utilisé sans comparaison de hash tokenizer')
+        expect(result.stdout).toContain('cache tokenisé copié dans le checkpoint courant')
+        expect(result.stdout).not.toContain('encodage complet nécessaire')
+    })
 })
 
 function createTinyModel(vocabularySize = 5): FinalTinyLlm {
@@ -513,7 +590,5 @@ async function saveMetadataPlaceholder(directoryPath: string): Promise<void> {
 }
 
 async function saveJson(filePath: string, value: unknown): Promise<void> {
-    const { writeFile } = await import('node:fs/promises')
-
     await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8')
 }

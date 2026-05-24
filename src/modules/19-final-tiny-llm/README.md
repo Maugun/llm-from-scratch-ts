@@ -95,11 +95,12 @@ npm run llm:generate -- --config data/private/final-llm-config.json --prompt "Ut
 
 Arguments supportés:
 
-| Argument          | Commandes concernées             | Effet                                                                                                         |
-| ----------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `--config <path>` | toutes                           | Chemin vers un fichier JSON de configuration. Si absent, la CLI cherche `data/private/final-llm-config.json`. |
-| `--prompt "..."`  | `llm:generate`                   | Prompt de départ pour une génération ponctuelle.                                                              |
-| `--force-train`   | `llm:train`, `demo:19-final-llm` | Force un nouvel entraînement depuis zéro dans une nouvelle version de checkpoint.                             |
+| Argument                      | Commandes concernées             | Effet                                                                                                                                   |
+| ----------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `--config <path>`             | toutes                           | Chemin vers un fichier JSON de configuration. Si absent, la CLI cherche `data/private/final-llm-config.json`.                           |
+| `--prompt "..."`              | `llm:generate`                   | Prompt de départ pour une génération ponctuelle.                                                                                        |
+| `--force-train`               | `llm:train`, `demo:19-final-llm` | Force un nouvel entraînement depuis zéro dans une nouvelle version de checkpoint.                                                       |
+| `--dataset-cache-from <path>` | `llm:train`, `demo:19-final-llm` | Importe le cache tokenisé et le tokenizer d’un autre checkpoint, d’un dossier `dataset-cache`, ou d’un fichier `tokenized-corpus.json`. |
 
 Avant un entraînement sérieux, nettoie ton corpus:
 
@@ -178,6 +179,19 @@ Ce cache contient les `tokenIds` du corpus, plus un hash du corpus et du tokeniz
 par les versions `v1`, `v2`, etc. Si le cache manque, s’il a été supprimé, ou si le corpus/tokenizer
 ne correspond plus, la CLI réencode le corpus puis recrée le cache. Le checkpoint reste donc
 chargeable même sans cache; le cache sert uniquement à accélérer les reprises d’entraînement.
+
+Pour démarrer un nouveau checkpoint à partir d’un corpus déjà tokenisé ailleurs, utilise:
+
+```bash
+npm run llm:train -- --config data/private/final-llm-config.json --dataset-cache-from data/checkpoints/autre-checkpoint
+```
+
+Cette option copie le cache dans le nouveau `checkpointPath` et le considère compatible sans comparer
+le hash du tokenizer. Quand aucun modèle n’est encore chargé dans le nouveau checkpoint, elle importe
+aussi le `tokenizer.json` de la dernière version du checkpoint source, avant l’étape qui entraînerait
+normalement un nouveau tokenizer BPE. Elle est pratique quand tu sais que le corpus et la configuration
+BPE sont les mêmes, mais elle peut produire un entraînement incohérent si le cache vient d’un tokenizer
+différent.
 
 Chaque version contient:
 

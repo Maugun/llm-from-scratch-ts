@@ -4,7 +4,7 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { createInterface } from 'node:readline/promises'
 import { stdin as input, stdout as output } from 'node:process'
 import { platform } from 'node:os'
-import { join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 
 import {
     formatBytes,
@@ -21,6 +21,7 @@ import {
 import {
     loadFinalTinyLlmCheckpoint,
     createFinalTinyLlm,
+    loadBpeTokenizer,
     trainBpeTokenizer,
     trainFinalTinyLlm,
     saveFinalTinyLlmCheckpoint,
@@ -37,6 +38,7 @@ import {
     type FinalTinyLlmTrainingProgress,
 } from './index.js'
 import {
+    listCheckpointVersions,
     resolveCheckpointVersionPlan,
     type CheckpointVersionInfo,
 } from '../18-small-real-model-training/index.js'
@@ -81,6 +83,7 @@ type FinalTinyLlmDemoConfig = {
 type CliOptions = {
     readonly mode: DemoMode
     readonly configPath: string
+    readonly datasetCacheFrom: string | undefined
     readonly forceTrain: boolean
     readonly prompt: string | undefined
 }
@@ -138,6 +141,7 @@ const defaultCheckpointPath = join(process.cwd(), 'data', 'checkpoints', 'final-
 const tokenizedCorpusCacheVersion = 1
 const tokenizedCorpusCacheDirectoryName = 'dataset-cache'
 const tokenizedCorpusCacheFileName = 'tokenized-corpus.json'
+const bpeTokenizerFileName = 'tokenizer.json'
 const progressLogIntervalMs = 500
 const cliOptions = parseCliOptions(process.argv.slice(2))
 const localConfig = await loadLocalConfig(cliOptions.configPath)
@@ -298,6 +302,37 @@ async function createOrLoadModelAndTokenizer(): Promise<ModelLoadResult> {
         }
     }
 
+    const tokenizer = await createOrImportTokenizerForNewModel()
+    const model = createFinalTinyLlm({
+        contextLength: config.contextLength,
+        embeddingDimension: config.embeddingDimension,
+        feedForwardDimension: config.feedForwardDimension,
+        headCount: config.headCount,
+        layerCount: config.layerCount,
+        vocabularySize: tokenizer.vocabularySize,
+    })
+
+    return {
+        loadedFromCheckpoint: false,
+        loadedVersion: undefined,
+        model,
+        tokenizer,
+    }
+}
+
+async function createOrImportTokenizerForNewModel(): Promise<BpeTokenizer> {
+    if (cliOptions.datasetCacheFrom !== undefined) {
+        const tokenizerPath = await resolveDatasetCacheImportTokenizerPath(
+            cliOptions.datasetCacheFrom,
+        )
+
+        console.info('Import du tokenizer BPE:')
+        console.info(`  source: ${tokenizerPath}`)
+        console.info('  Ce tokenizer est utilisé pour garder les ids du cache importé cohérents.')
+
+        return loadBpeTokenizer(tokenizerPath)
+    }
+
     console.info('Entraînement du tokenizer BPE:')
     console.info(
         '  Le BPE apprend des morceaux fréquents du corpus pour réduire le nombre de tokens.',
@@ -314,21 +349,8 @@ async function createOrLoadModelAndTokenizer(): Promise<ModelLoadResult> {
         vocabularySize: config.bpeVocabularySize,
     })
     finishTrainingProgressLine()
-    const model = createFinalTinyLlm({
-        contextLength: config.contextLength,
-        embeddingDimension: config.embeddingDimension,
-        feedForwardDimension: config.feedForwardDimension,
-        headCount: config.headCount,
-        layerCount: config.layerCount,
-        vocabularySize: tokenizer.vocabularySize,
-    })
 
-    return {
-        loadedFromCheckpoint: false,
-        loadedVersion: undefined,
-        model,
-        tokenizer,
-    }
+    return tokenizer
 }
 
 function shouldTrain(result: ModelLoadResult): boolean {
@@ -505,14 +527,50 @@ async function loadOrCreateTokenizedCorpusCache(
     rawText: string,
     tokenizer: BpeTokenizer,
 ): Promise<readonly number[]> {
-    const cachePath = createTokenizedCorpusCachePath()
+    const canonicalCachePath = createTokenizedCorpusCachePath(config.checkpointPath)
     const expectedCorpusHash = hashString(rawText)
     const expectedTokenizerHash = hashTokenizer(tokenizer)
     const expectedCorpusByteLength = Buffer.byteLength(rawText, 'utf8')
 
-    console.info(`  cache tokenisé: ${cachePath}`)
+    console.info(`  cache tokenisé partagé: ${canonicalCachePath}`)
 
-    if (existsSync(cachePath)) {
+    if (cliOptions.datasetCacheFrom !== undefined) {
+        const importedCachePath = resolveDatasetCacheImportPath(cliOptions.datasetCacheFrom)
+
+        console.info(`  import cache demandé: ${importedCachePath}`)
+
+        const importedCache = validateTokenizedCorpusCache(
+            JSON.parse(await readFile(importedCachePath, 'utf8')),
+        )
+
+        console.info(
+            '  cache importé: utilisé sans comparaison de hash tokenizer, car l’option CLI est explicite.',
+        )
+        console.info(
+            `  tokenIds importés: ${importedCache.tokenIds.length.toLocaleString('fr-FR')}`,
+        )
+
+        await saveTokenizedCorpusCache(canonicalCachePath, {
+            corpusByteLength: expectedCorpusByteLength,
+            corpusHash: expectedCorpusHash,
+            tokenIds: importedCache.tokenIds,
+            tokenizer,
+            tokenizerHash: expectedTokenizerHash,
+        })
+        console.info(`  cache tokenisé copié dans le checkpoint courant: ${canonicalCachePath}`)
+
+        return importedCache.tokenIds
+    }
+
+    const cachePaths = createTokenizedCorpusCacheCandidatePaths()
+
+    for (const cachePath of cachePaths) {
+        console.info(`  recherche cache: ${cachePath}`)
+
+        if (!existsSync(cachePath)) {
+            continue
+        }
+
         try {
             const cache = validateTokenizedCorpusCache(
                 JSON.parse(await readFile(cachePath, 'utf8')),
@@ -525,28 +583,42 @@ async function loadOrCreateTokenizedCorpusCache(
 
             if (mismatchReason === undefined) {
                 console.info('  cache tokenisé trouvé: compatible.')
+                console.info(`  source: ${cachePath}`)
                 console.info(`  tokenIds chargés: ${cache.tokenIds.length.toLocaleString('fr-FR')}`)
+
+                if (cachePath !== canonicalCachePath) {
+                    await saveTokenizedCorpusCache(canonicalCachePath, {
+                        corpusByteLength: expectedCorpusByteLength,
+                        corpusHash: expectedCorpusHash,
+                        tokenIds: cache.tokenIds,
+                        tokenizer,
+                        tokenizerHash: expectedTokenizerHash,
+                    })
+                    console.info(
+                        `  cache tokenisé recopié vers l’emplacement partagé: ${canonicalCachePath}`,
+                    )
+                }
 
                 return cache.tokenIds
             }
 
-            console.info(`  cache tokenisé ignoré: ${mismatchReason}.`)
+            console.info(`  cache tokenisé ignoré (${cachePath}): ${mismatchReason}.`)
         } catch (error) {
             console.info('  cache tokenisé ignoré: lecture ou validation impossible.')
             console.info(
                 error instanceof Error ? `  raison: ${error.message}` : '  raison inconnue.',
             )
         }
-    } else {
-        console.info('  cache tokenisé absent: encodage complet nécessaire.')
     }
+
+    console.info('  aucun cache compatible trouvé: encodage complet nécessaire.')
 
     console.info(
         '  encodage du corpus avec le tokenizer chargé; cette étape peut prendre un moment sur un gros fichier.',
     )
     const tokenIds = encodeWithBpeProgress(tokenizer, rawText, createCorpusEncodingReporter())
 
-    await saveTokenizedCorpusCache(cachePath, {
+    await saveTokenizedCorpusCache(canonicalCachePath, {
         corpusByteLength: expectedCorpusByteLength,
         corpusHash: expectedCorpusHash,
         tokenIds,
@@ -554,17 +626,76 @@ async function loadOrCreateTokenizedCorpusCache(
         tokenizerHash: expectedTokenizerHash,
     })
 
-    console.info(`  cache tokenisé sauvegardé: ${cachePath}`)
+    console.info(`  cache tokenisé sauvegardé: ${canonicalCachePath}`)
 
     return tokenIds
 }
 
-function createTokenizedCorpusCachePath(): string {
-    return join(
-        config.checkpointPath,
-        tokenizedCorpusCacheDirectoryName,
-        tokenizedCorpusCacheFileName,
+function resolveDatasetCacheImportPath(sourcePath: string): string {
+    if (sourcePath.endsWith(tokenizedCorpusCacheFileName)) {
+        return sourcePath
+    }
+
+    if (sourcePath.endsWith(tokenizedCorpusCacheDirectoryName)) {
+        return join(sourcePath, tokenizedCorpusCacheFileName)
+    }
+
+    return createTokenizedCorpusCachePath(sourcePath)
+}
+
+async function resolveDatasetCacheImportTokenizerPath(sourcePath: string): Promise<string> {
+    if (sourcePath.endsWith(bpeTokenizerFileName)) {
+        return sourcePath
+    }
+
+    const checkpointDirectoryPath = resolveDatasetCacheImportCheckpointDirectoryPath(sourcePath)
+
+    if (isCheckpointVersionDirectoryPath(checkpointDirectoryPath)) {
+        return join(checkpointDirectoryPath, bpeTokenizerFileName)
+    }
+
+    const versions = await listCheckpointVersions(checkpointDirectoryPath)
+    const latestVersion = versions.at(-1)
+
+    if (latestVersion === undefined) {
+        throw new Error(
+            `Impossible d’importer le tokenizer: aucune version trouvée dans ${checkpointDirectoryPath}.`,
+        )
+    }
+
+    return join(latestVersion.directoryPath, bpeTokenizerFileName)
+}
+
+function resolveDatasetCacheImportCheckpointDirectoryPath(sourcePath: string): string {
+    if (sourcePath.endsWith(tokenizedCorpusCacheFileName)) {
+        return dirname(dirname(sourcePath))
+    }
+
+    if (sourcePath.endsWith(tokenizedCorpusCacheDirectoryName)) {
+        return dirname(sourcePath)
+    }
+
+    return sourcePath
+}
+
+function isCheckpointVersionDirectoryPath(directoryPath: string): boolean {
+    return /^v[1-9]\d*$/u.test(basename(directoryPath))
+}
+
+function createTokenizedCorpusCacheCandidatePaths(): readonly string[] {
+    return Array.from(
+        new Set([
+            createTokenizedCorpusCachePath(config.checkpointPath),
+            ...(checkpointPlan.loadVersion === undefined
+                ? []
+                : [createTokenizedCorpusCachePath(checkpointPlan.loadVersion.directoryPath)]),
+            createTokenizedCorpusCachePath(checkpointSaveVersion.directoryPath),
+        ]),
     )
+}
+
+function createTokenizedCorpusCachePath(baseDirectoryPath: string): string {
+    return join(baseDirectoryPath, tokenizedCorpusCacheDirectoryName, tokenizedCorpusCacheFileName)
 }
 
 async function saveTokenizedCorpusCache(
@@ -588,9 +719,7 @@ async function saveTokenizedCorpusCache(
         version: tokenizedCorpusCacheVersion,
     }
 
-    await mkdir(join(config.checkpointPath, tokenizedCorpusCacheDirectoryName), {
-        recursive: true,
-    })
+    await mkdir(dirname(cachePath), { recursive: true })
     await writeFile(cachePath, `${JSON.stringify(cache, null, 2)}\n`, 'utf8')
 }
 
@@ -1090,6 +1219,7 @@ function isCheckpointCompatible(model: FinalTinyLlm): boolean {
 function parseCliOptions(args: readonly string[]): CliOptions {
     let mode: DemoMode = 'demo'
     let configPath = defaultConfigPath
+    let datasetCacheFrom: string | undefined
     let forceTrain = false
     let prompt: string | undefined
 
@@ -1108,6 +1238,12 @@ function parseCliOptions(args: readonly string[]): CliOptions {
             continue
         }
 
+        if (arg === '--dataset-cache-from') {
+            datasetCacheFrom = readRequiredArgument(args[index + 1], '--dataset-cache-from')
+            index++
+            continue
+        }
+
         if (arg === '--force-train') {
             forceTrain = true
             continue
@@ -1122,7 +1258,7 @@ function parseCliOptions(args: readonly string[]): CliOptions {
         throw new Error(`Argument inconnu: ${String(arg)}.`)
     }
 
-    return { configPath, forceTrain, mode, prompt }
+    return { configPath, datasetCacheFrom, forceTrain, mode, prompt }
 }
 
 async function loadLocalConfig(configPath: string): Promise<Record<string, unknown>> {
